@@ -12,11 +12,17 @@ stress *without* materially affecting their value.
 
 Mathematical formulation:
 
-    HQLA = L₁ + L_{2A,recoverable}(stress)
+    HQLA-like stock = L₁ + L_recoverable(stress)   [LSR-24 numerator]
 
 where
     L₁ = total_supply_assets - total_borrow_assets        (instant liquidity)
-    L_{2A,recoverable}(stress) = Σᵢ min(cᵢ × P × (1 - π(cᵢ)), bᵢ × LIF) - bad_debtᵢ(stress)
+    L_recoverable(stress) = Σᵢ repaidᵢ over LIQUIDATABLE, EXECUTABLE positions,
+        repaidᵢ = min(bᵢ, seizedᵢ × P_oracle / LIF), seizedᵢ = min(bᵢ×LIF/P_oracle, cᵢ),
+        executable iff seizedᵢ × P_market × (1 - π(seizedᵢ)) >= repaidᵢ.
+    Bad debt (collateral-exhaustion write-offs) is reported separately.
+    NOTE: 'L_recoverable' is loosely analogous to, but is NOT, Basel Level 2A;
+    the metric is a protocol-adapted 24h Liquidity Survival Ratio (LSR-24),
+    LCR-inspired rather than BCBS 238-compliant (BCBS 238 is a 30-day ratio).
 
 The cap min(c×P×(1-π), b×LIF) reflects that:
     - liquidators only seize what's needed to cover debt × LIF
@@ -50,14 +56,17 @@ def position_recovery_value(
 
     Returns (recovery_value, expected_bad_debt) for one position.
 
-    The liquidator's behavior:
-        1. seizes min(c × LIF / P_market, c) collateral
-        2. sells on DEX, receiving seized × P_market × (1 - π(seized))
-        3. uses proceeds to repay debt; surplus returns to borrower
-        4. if proceeds < debt → bad debt = debt - proceeds
+    v1.1, contract-faithful: seizure sized on ORACLE terms; bad debt only on
+    collateral exhaustion. The DEX resale (market price, stress slippage)
+    gates EXECUTABILITY: if it cannot cover the repayment, no rational keeper
+    liquidates within the horizon and the position contributes nothing
+    (conservative for the numerator, no fictitious write-off either).
 
-    Recovery value to the *pool* = min(proceeds, debt). The pool does not
-    benefit from over-collateralization — that surplus belongs to the borrower.
+    Mechanics:
+        1. seized = min(b × LIF / P_oracle, c)   [oracle terms, as on-chain]
+        2. repaid to pool = min(b, seized × P_oracle / LIF)
+        3. bad debt = b - repaid, only when collateral is exhausted
+        4. executability gate: seized × P_market × (1 - π(seized)) >= repaid
 
     Args:
         state: current market state (used for LIF parameter only)
@@ -71,21 +80,30 @@ def position_recovery_value(
     """
     if borrow_assets < EPS:
         return 0.0, 0.0
-    if collateral_amount < EPS or market_price < EPS:
-        return 0.0, borrow_assets  # full bad debt — nothing to seize
+    if collateral_amount < EPS:
+        return 0.0, borrow_assets  # nothing to seize: full write-off
 
     lif = liquidation_incentive_factor(state.params.lltv)
-    desired_seize = borrow_assets * lif / market_price
+    oracle = state.oracle_price
+    desired_seize = borrow_assets * lif / oracle
     seized = min(desired_seize, collateral_amount)
 
-    # Realized DEX proceeds after slippage
+    # Pool-side accounting (Morpho.sol): repaid on oracle terms; bad debt only
+    # on collateral exhaustion
+    repaid = min(borrow_assets, seized * oracle / lif)
+    bad_debt = max(0.0, borrow_assets - repaid)
+
+    # Liquidator-side executability: the DEX resale at market price and
+    # stress slippage must cover the repayment, otherwise no rational keeper
+    # executes and the stressed debt delivers nothing within the horizon.
+    if market_price < EPS:
+        return 0.0, 0.0
     pi = slippage_curve.slippage(seized)
     proceeds = seized * market_price * (1.0 - pi)
+    if proceeds < repaid:
+        return 0.0, 0.0  # unexecutable at stress prices: no recovery, no realised write-off
 
-    # Pool recovers up to debt; surplus is borrower's
-    recovery = min(proceeds, borrow_assets)
-    bad_debt = max(0.0, borrow_assets - proceeds)
-    return recovery, bad_debt
+    return repaid, bad_debt
 
 
 def hqla_v03(
@@ -99,7 +117,7 @@ def hqla_v03(
 
     L1 = total_supply_assets - total_borrow_assets (instant liquidity).
 
-    L_{2A,net} = Σᵢ recoveryᵢ(stress) — that is, only what the liquidation
+    L_net = Σᵢ recoveryᵢ(stress) — that is, only what the liquidation
     process can actually deliver to the pool, net of slippage and capped at
     each position's debt.
 
@@ -110,9 +128,12 @@ def hqla_v03(
     if not state.positions:
         return l1, 0.0, 0.0, l1
 
+    # v1.1: only positions actually liquidatable at the stressed oracle can
+    # deliver recoveries within the horizon; healthy positions' debt is not
+    # callable and contributes nothing to the stock.
     total_recovery = 0.0
     total_bad_debt = 0.0
-    for pos in state.positions:
+    for pos in state.liquidatable_positions():
         b_i = pos.borrow_assets(state.total_borrow_assets, state.total_borrow_shares)
         rec, bd = position_recovery_value(
             state=state,
@@ -210,6 +231,10 @@ def lcr_onchain_v03(
     The denominator is net stressed outflows: alpha × total_supply_assets,
     minus expected liquidation inflows (capped at 75% of outflows per Basel).
 
+    Single-counting (v1.1): liquidation recoveries enter the numerator only.
+    They are NOT netted from outflows again, closing the v1.0 double-count
+    (docs/MODEL_CORRECTIONS.md, C6).
+
     Args:
         state: market state at evaluation time
         market_price: collateral DEX market price (may differ from oracle)
@@ -221,11 +246,12 @@ def lcr_onchain_v03(
     # Total stress outflows
     o_stress = outflow_alpha * state.total_supply_assets
 
-    # Liquidation inflows over the 30-day horizon: equal to recovered loan
-    # assets from liquidations. Per Basel cap: max 75% of outflows.
-    i_stress = min(l2a, 0.75 * o_stress)
+    # v1.1 single-count: recoveries live in the numerator only; no second
+    # netting as inflows. The denominator floor is scale-relative (C7).
+    i_stress = 0.0
 
-    net_outflows = max(o_stress - i_stress, 1.0)  # avoid div-by-zero
+    eps_floor = max(1e-9 * state.total_supply_assets, 1e-12)
+    net_outflows = max(o_stress - i_stress, eps_floor)
     lcr = hqla / net_outflows
 
     components = {

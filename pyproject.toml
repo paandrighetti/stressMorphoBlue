@@ -1,6 +1,6 @@
 [project]
 name = "morpho-stress"
-version = "0.1.0"
+version = "1.0.0"
 description = "Liquidity stress testing framework for Morpho Blue isolated lending markets"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"

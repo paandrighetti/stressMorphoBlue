@@ -1,6 +1,6 @@
 """Interest Rate Model — AdaptiveCurveIRM (full adaptive version).
 
-Implements the canonical Morpho Blue IRM as deployed on mainnet
+Float-arithmetic model of Morpho Blue's AdaptiveCurveIRM (v1.1, contract-faithful update scheme)
 (`AdaptiveCurveIrm.sol`). Reference:
 
     Morpho Labs, *Morpho Blue Whitepaper* §5
@@ -32,6 +32,15 @@ For unit consistency:
 All arithmetic is float64 native — we do not replicate the on-chain WAD math
 exactly, since stress simulations do not need 1e-18 precision and the
 computational savings are large.
+
+
+REMAINING SIMPLIFICATIONS vs the mainnet contract (see docs/MODEL_CORRECTIONS.md):
+* Exact exponentials (math.exp / expm1) instead of the contract's 3-term
+  wTaylorCompounded approximation; float64 instead of WAD fixed-point.
+* The fee recipient's supply shares are not tracked individually. Total
+  supply accrues the FULL interest (as on-chain), so utilisation and the
+  S - B liquidity margin match the contract; only the split of supply
+  between fee recipient and other suppliers is aggregated.
 """
 
 from __future__ import annotations
@@ -97,15 +106,13 @@ def update_rate_at_target(
 ) -> float:
     """Adaptive update of rate_at_target — Morpho's adaptive curve step.
 
-    Mechanism: the deviation
-        err = (U - U_target) / max(U_target, 1 - U_target)
+    Mechanism: the deviation, normalised piecewise as in the contract,
+        err = (U - U_target) / U_target            if U < U_target
+        err = (U - U_target) / (1 - U_target)      if U >= U_target
     drives an exponential adjustment of rate_at_target:
         d(rate_at_target) / dt = rate_at_target × speed × err
     Closed-form solution over Δt:
         rate_at_target_new = rate_at_target × exp(speed × err × Δt / year)
-
-    We use ``max(U_target, 1 - U_target)`` as the normalizer to symmetrize the
-    deviation: at U=0 vs U=1, |err| reaches the same magnitude.
 
     The result is clipped to ``[min_rate_at_target, max_rate_at_target]``.
     """
@@ -114,7 +121,7 @@ def update_rate_at_target(
 
     u = max(0.0, min(1.0, utilization))
     u_t = params.target_utilization
-    norm = max(u_t, 1.0 - u_t)
+    norm = u_t if u < u_t else (1.0 - u_t)
     err = (u - u_t) / max(norm, EPS)
 
     exponent = params.adjustment_speed * err * elapsed_seconds / SECONDS_PER_YEAR
@@ -139,31 +146,40 @@ def accrue(
 
     Returns ``(new_supply_assets, new_borrow_assets, new_rate_at_target)``.
 
-    The interest is accrued at the rate evaluated at the *initial* utilization
-    of the period, which is what Morpho does on-chain. The rate_at_target
-    update happens after the accrual, so the new rate applies to the *next*
-    period.
+    Contract-faithful scheme: the utilisation error is normalised piecewise,
+    rate_at_target evolves as start*exp(speed*err*dt), and interest accrues at
+    the borrow rate evaluated at the AVERAGE rate-at-target over the interval,
+    approximated as (start + end + 2*mid)/4 with mid = start*exp(la/2), exactly
+    as AdaptiveCurveIrm.sol does. Total supply accrues the FULL interest (the
+    fee is a split of supply, not a leak).
 
-    Args:
-        update_target: when True (default), the adaptive layer updates
-            rate_at_target. Set False to freeze (useful for unit testing the
-            curve in isolation, or for sensitivity analyses).
-    """
+"""
     if elapsed_seconds <= 0 or total_supply_assets < EPS:
         return total_supply_assets, total_borrow_assets, rate_at_target
 
     u = total_borrow_assets / total_supply_assets if total_supply_assets > EPS else 0.0
-    r_b = borrow_rate(u, rate_at_target, params)
+    u_c = max(0.0, min(1.0, u))
+    u_t = params.target_utilization
+    norm = u_t if u_c < u_t else (1.0 - u_t)
+    err = (u_c - u_t) / max(norm, EPS)
+
+    if update_target:
+        la = params.adjustment_speed * err * elapsed_seconds / SECONDS_PER_YEAR
+        la = max(-50.0, min(50.0, la))
+        clip = lambda r: max(params.min_rate_at_target,
+                             min(params.max_rate_at_target, r))
+        end_rat = clip(rate_at_target * math.exp(la))
+        mid_rat = clip(rate_at_target * math.exp(la / 2.0))
+        avg_rat = (rate_at_target + end_rat + 2.0 * mid_rat) / 4.0
+    else:
+        end_rat = rate_at_target
+        avg_rat = rate_at_target
+
+    r_b = borrow_rate(u, avg_rat, params)
     growth = math.expm1(r_b * elapsed_seconds / SECONDS_PER_YEAR)
     interest = total_borrow_assets * growth
 
     new_borrow = total_borrow_assets + interest
-    new_supply = total_supply_assets + interest * (1.0 - fee)
+    new_supply = total_supply_assets + interest
 
-    new_rate = (
-        update_rate_at_target(rate_at_target, u, params, elapsed_seconds)
-        if update_target
-        else rate_at_target
-    )
-
-    return new_supply, new_borrow, new_rate
+    return new_supply, new_borrow, end_rat

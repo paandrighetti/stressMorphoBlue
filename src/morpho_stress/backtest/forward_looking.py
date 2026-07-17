@@ -1,4 +1,10 @@
-"""Forward-looking stress analysis on current Morpho Blue markets.
+"""
+v0 SYNTHETIC DEMONSTRATION. Every profile, position set, price path and
+distribution in this module is generated (representative parameters,
+Dirichlet/normal draws, Beta quantile fits). None of the published 26-market
+results derive from this module; it exists to demonstrate the forward-looking
+API shape ahead of a v1.1 wiring to the live pipeline.
+Forward-looking stress analysis on current Morpho Blue markets.
 
 This module applies the v0.3 framework to a roster of currently-deployed
 Morpho Blue markets to produce risk rankings.
@@ -62,6 +68,7 @@ class MarketProfile:
     slippage_b: float = 0.55
     # Historical-event-equivalent drawdown distribution. Loaded from real
     # market observations in production; here we use plausible quantiles.
+    # v0 calibrates the p99 only; drawdown_p50 is recorded but unused.
     drawdown_p50: float = 0.02
     drawdown_p99: float = 0.12
 
@@ -194,7 +201,7 @@ def _profile_to_state(p: MarketProfile, seed: int = 42) -> MarketState:
     )
 
     params = MarketParams(
-        market_id="0x" + f"{hash(p.market_label) & ((1 << 256) - 1):064x}",
+        market_id="0x" + __import__("hashlib").sha256(p.market_label.encode()).hexdigest(),
         loan_decimals=6,
         collateral_decimals=18,
         lltv=p.lltv,

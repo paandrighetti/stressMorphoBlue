@@ -14,7 +14,7 @@ sources. They form the Phase 2 deliverable described in
      pointing to a fork)
    - `range.start_ts` and `range.end_ts` (UTC timestamps)
    - `sampling.*` cadences (default values are sensible)
-   - `markets:` (list of market ids — fill by running
+   - `markets:` (list of market ids; fill by running
      `scripts/select_markets.py` first)
 
 3. Free-tier API accounts:
@@ -46,7 +46,7 @@ sources. They form the Phase 2 deliverable described in
 ```bash
 # Activate venv
 source .venv/bin/activate          # macOS / Linux
-.\.venv\Scripts\Activate.ps1       # Windows
+.venv\Scripts\Activate.ps1        # Windows (PowerShell)
 
 # 1. Discover top-N markets and patch config.local.yaml
 python scripts/select_markets.py --top 10 --in-place

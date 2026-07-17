@@ -5,8 +5,8 @@
 > regulatory standards (specifically the Liquidity Coverage Ratio of
 > document BCBS 238, 2013).
 
-**Status**: methodological draft. Not production-ready. Not investment
-advice.
+**Status**: v1.0 research release (Phases 0 to 7 complete, 145 tests
+passing). Not a production risk system. Not investment advice.
 
 ---
 
@@ -112,46 +112,13 @@ morpho-blue-liquidity-stress/
 
 ## Headline findings
 
-The framework applied to **26 live Morpho Blue isolated markets** on
-Ethereum mainnet (aggregate Total Value Locked of approximately
-1.7 billion U.S. dollars) produces:
+The framework monitors **26 Morpho Blue isolated markets** on Ethereum
+mainnet; evaluated coverage and headline figures are generated from
+`docs/evaluation_results.csv`, never hand-transcribed.
 
-**Under BCBS 238-aligned 24-hour stress**:
-
-| Tier | Markets | Aggregate Total Value Locked | Share |
-|---|---|---|---|
-| red | 1 | $23M | 1.4% |
-| yellow | 7 | $737M | 43.5% |
-| green-watch | 5 | $384M | 22.6% |
-| green-strong | 13 | $552M | 32.6% |
-
-The single red market is **PT-apyUSD-18JUN2026/USDC**, a Pendle
-principal-token market with 99th-percentile bad debt at 5.7% of TVL
-under the calibrated stress scenario. The yellow tier carries the
-bulk of the protocol's material exposure, with approximately 14.5
-million U.S. dollars of cumulative 99th-percentile bad debt across
-the four mainstream BTC/ETH-collateral markets.
-
-**Under the extreme stress test** (drawdown 25%, outflow 35%,
-calibrated against the KelpDAO 2026 + USDC depeg 2023 hybrid):
-
-- 18 markets PASS, $1.22 billion of aggregate TVL (71.9% of total)
-- 8 markets FAIL, $476M (28.1% of total)
-- Failures cluster on Pendle principal tokens, leveraged liquid
-  staking markets at high liquidation thresholds, and exotic
-  synthetic stablecoins.
-
-**MetaMorpho vault curator discipline scores** (top 20 vaults):
-
-The four largest USDC-asset vaults (Gauntlet USDC Prime, Steakhouse
-USDC, Vault Bridge USDC, Hakutora USDC) converge at a curator score of
-approximately 2.0, reflecting near-exclusive allocation to mainstream
-yellow-tier markets. This is a structural feature of the USDC product:
-the bulk of DeFi USDC yield originates from these markets. PYUSD- and
-RLUSD-asset vaults (Sentora) score below 1.0 through diversification
-across green-strong synthetic-stablecoin markets.
-
----
+<!-- BEGIN GENERATED: readme_block -->
+**Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 11 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.9%, minimum 9.8%; tiers 7 red, 4 yellow, 0 green. Extreme scenario: 11/11 fail on liquidity, 0/11 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
+<!-- END GENERATED: readme_block -->
 
 ## Quick start
 
@@ -160,7 +127,7 @@ across green-strong synthetic-stablecoin markets.
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
-# Run the test suite (145 tests, approximately 90 seconds)
+# Run the test suite (145 tests, approximately 2 minutes)
 PYTHONPATH=src pytest tests/ -v
 
 # Run the Phase-5 end-to-end demonstration
@@ -202,9 +169,32 @@ event-calibrated outflow fraction.
 
 ---
 
+## Links
+
+- **Live Dune dashboard** (TVL, top markets, liquidation flows): https://dune.com/bandulf/morpho-blue-liquidity-stress
+- **Published article**: [`MIRROR_ARTICLE.md`](./MIRROR_ARTICLE.md)
+
+---
+
+## Citing this work
+
+If this framework informs your research or analysis, please cite:
+
+> Pierre-Antoine Andrighetti. (2026). *Morpho Blue: a Basel III liquidity stress testing framework for isolated lending markets and MetaMorpho vaults.* https://github.com/paandrighetti/stressMorphoBlue
+
+---
+
+## Contact
+
+https://www.linkedin.com/in/pierre-antoine-andrighetti
+https://x.com/bandulf
+p.a.andrighetti@gmail.com
+
+---
+
 ## License
 
-MIT (to be confirmed before public release).
+MIT. See [LICENSE](./LICENSE).
 
 ## Disclaimer
 

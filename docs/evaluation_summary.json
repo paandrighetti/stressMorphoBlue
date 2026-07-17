@@ -1,0 +1,96 @@
+{
+  "engine": "v1.1",
+  "alpha_star_median": 0.10865128665936129,
+  "alpha_star_min": 0.09785535828564776,
+  "markets_evaluated": 11,
+  "markets_excluded": [
+    {
+      "market_id": "0x90ef0c5a0dc7c4de4ad4585002d44e9d411d212d2f6258e94948beecf8b4c0d5",
+      "market": "sUSDe/PYUSD",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0x3274643db77a064abd3bc851de77556a4ad2e2f502f4f0c80845fa8f909ecf0b",
+      "market": "sUSDS/USDT",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0x88a18b2f4d94e7ad27a381b15531c06abf05a7c99dd5d3c3679875fed6f7e742",
+      "market": "sUSDe/USDtb",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0x1590cb22d797e226df92ebc6e0153427e207299916e7e4e53461389ad68272fb",
+      "market": "wsrUSD/USDC",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0xe83d72fa5b00dcd46d9e0e860d95aa540d5ec106da5833108a9f826f21f36f52",
+      "market": "AA_FalconXUSDC/USDC",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0xc0ae375fd761ff19b3f04de5534c0f1ec110f80e1c2ede27c42c1c43c3040394",
+      "market": "syrupUSDC/RLUSD",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0xa75bb490ecfee90c86a9d22ebc2dde42fb83478b3f18722b9fc6f5f668cab124",
+      "market": "PT-apyUSD-18JUN2026/USDC",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0x6a7e36eb088bd501d73f7ab4c5b8671358559341a78ce521c9e499dc0bc642b9",
+      "market": "LBTC/PYUSD",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0x23a7d0ff682b323363fb8ba58327ed87001f6306e09b7fd7413bbe4698e749c8",
+      "market": "msY/USDC",
+      "reason": "no oracle price series (oracle interface not supported this window)"
+    },
+    {
+      "market_id": "0xed05fcc2893b78b3fa468d21b6e4d2925e7f2c64eb1f16279757c43f87502a99",
+      "market": "PT-apxUSD-18JUN2026/USDC",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0xdbf4bc065d4e76f4505a523f2bba5e5ccdca94c16d67c3a6ff1dadbcbb26d4aa",
+      "market": "stcUSD/USDT",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0x582fdc4176da0ab5c65e086603ab9ecd9188e889e16efef6e35854cf14e15065",
+      "market": "sUSDat/AUSD",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0xd570c19c0dc0fbe4ab7faf4a37c4150e1c141c8aada8ca3e1b4b6c1b712af93d",
+      "market": "stUSDS/USDC",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0x9bc98c2f20ac58287ef2c860eea53a2fdc27c17a7817ff1206c0b7840cc7cd79",
+      "market": "PT-reUSD-25JUN2026/USDC",
+      "reason": "no slippage curve (no quotes)"
+    },
+    {
+      "market_id": "0xef2c308b5abecf5c8750a1aa82b47c558005feb7a03f4f8e1ad682d71ac8d0ba",
+      "market": "mF-ONE/USDC",
+      "reason": "no slippage curve (no quotes)"
+    }
+  ],
+  "tiers": {
+    "red": 7,
+    "yellow": 4
+  },
+  "extreme_failures": 11,
+  "extreme_illiquidity_failures": 11,
+  "extreme_insolvency_failures": 0,
+  "extreme_fail_tvl_share_pct": 100.0,
+  "extreme_params": {
+    "drawdown": 0.25,
+    "alpha": 0.35
+  },
+  "n_paths": 200
+}

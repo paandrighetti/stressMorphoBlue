@@ -1,3 +1,5 @@
+> **DRAFT. Tables below were generated with the v1.0 engine; regenerate with v1.1 (docs/MODEL_CORRECTIONS.md) before publication.**
+
 # A Liquidity Stress Framework for Morpho Blue, Adapted from Basel III
 
 > **Summary**. We build a liquidity stress framework for Morpho Blue
@@ -16,7 +18,7 @@
 > U.S. dollars of aggregate Total Value Locked), the framework
 > produces two complementary findings.
 >
-> **Under BCBS 238-aligned 24-hour stress** (drawdown floor calibrated
+> **Under LCR-inspired 24-hour stress (LSR-24)** (drawdown floor calibrated
 > per asset class against historical events, outflow alpha calibrated
 > on stress-time withdrawal velocities), 1 market is flagged red, 7
 > are flagged yellow, and 18 fall in the green tier (split between
@@ -111,6 +113,11 @@ production-grade risk-monitoring system nor a security audit.
 ## 2. The framework
 
 ### 2.1 Adaptation of the Liquidity Coverage Ratio
+
+> Formulas in this section state the **v1.1 engine semantics**
+> (single-counted recoveries, oracle-terms seizure, exhaustion-based bad
+> debt, keeper executability). Historical v1.0 divergences are catalogued
+> in [docs/MODEL_CORRECTIONS.md](MODEL_CORRECTIONS.md).
 
 The Liquidity Coverage Ratio defined by the Basel Committee in BCBS
 238 (2013) is
@@ -405,69 +412,89 @@ Within `green`, we further distinguish:
 - **green-strong**: $\Pr(\mathrm{LCR}<1) < 1\%$ AND time-to-illiquid is infinite AND $\Pr[\text{bd}>0] = 0$ AND $\mathrm{bd}_{99}/\mathrm{TVL} < 0.01\%$.
 - **green-watch**: green but at least one indicator is non-negligible (typically a positive but small bad-debt tail).
 
-### 4.4 Risk panorama
+### 4.4 Risk panorama (engine v1.1, live positions)
 
-The roster of 26 markets resolves into the following distribution:
+Evaluated on the actual onchain position book (fetched via the Morpho API,
+per-market borrow-share coverage verified against market state) and on
+measured exit depth (Uniswap V3 quoter for majors; keyless CoW Protocol and
+KyberSwap aggregator quotes, size-rebased, for yield-bearing and exotic
+collateral). The primary discriminator is the survival frontier alpha\*, the
+largest 24-hour outflow fraction a market absorbs from instantaneous
+liquidity plus stress-liquidatable recoveries under keeper executability.
 
-| Tier | Markets | Aggregate Total Value Locked | Share of total |
-|---|---|---|---|
-| red | 1 | $23M | 1.4% |
-| yellow | 7 | $737M | 43.5% |
-| green-watch | 5 | $384M | 22.6% |
-| green-strong | 13 | $552M | 32.6% |
-| **Total** | **26** | **$1,696M** | **100.0%** |
+<!-- BEGIN GENERATED: report_results -->
+### Results (engine v1.1)
 
-The market in the `red` tier is **PT-apyUSD-18JUN2026/USDC**, a Pendle
-principal token with $23.1M Total Value Locked and 82.6% utilisation.
-The bad-debt distribution under scenario A reaches a 99th-percentile
-of $1.32M, equal to 5.7% of TVL, with 68.5% probability of positive
-bad debt across the Monte Carlo paths. This reflects two compounding
-factors:
+**11 of 26 monitored markets evaluated** (engine v1.1; exclusions documented below). Survival frontier alpha\*: median 10.9%, minimum 9.8%. Tiers on alpha\*: 7 red, 4 yellow, 0 green. Under the extreme scenario, **11 of 11 markets fail the liquidity leg while 0 fail the solvency leg**: at target utilisation, 24-hour risk on Morpho Blue is a liability-liquidity question, not an asset-solvency one.
 
-- **Wide drawdown distribution under the principal-token class
-  minimum** of 15%. The Pendle secondary market is structurally less
-  liquid than Curve or Uniswap V3 stablecoin pools, and our slippage
-  curve fit (asset-class default $a = 10^{-3}$, $b = 0.65$) reflects
-  this.
-- **High utilisation combined with concentrated borrower exposure**.
-  Although the absolute Total Value Locked is moderate, the Beta-
-  scaled distribution of position-level loan-to-values puts a
-  meaningful tail of positions within liquidation distance under the
-  scenario.
+#### Base 24h stress, sorted by survival frontier
 
-The seven `yellow` markets carry the bulk of the protocol's material
-tail risk in absolute dollar terms:
+| Market | Supply | U | alpha (window) | alpha\* | TTI | P(insolv) | Tier |
+|---|---|---|---|---|---|---|---|
+| weETH/PYUSD | $52.1M | 90% | 41% | **9.8%** | 5.7h | 0% | red |
+| weETH/RLUSD | $67.3M | 90% | 41% | **9.8%** | 5.8h | 0% | red |
+| wstETH/USDC | $30.7M | 90% | 40% | **9.9%** | 5.9h | 0% | red |
+| cbBTC/USDC | $287.6M | 90% | 38% | **10.2%** | 6.4h | 0% | red |
+| WBTC/USDC | $115.8M | 90% | 38% | **10.2%** | 6.4h | 0% | red |
+| wstETH/USDT | $172.7M | 89% | 40% | **10.9%** | 6.5h | 0% | red |
+| wstETH/WETH | 11,554 WETH | 89% | 5% | **11.2%** | inf | 0% | yellow |
+| wstETH/WETH | 48,995 WETH | 89% | 5% | **11.3%** | inf | 0% | yellow |
+| weETH/WETH | 8,901 WETH | 89% | 5% | **11.4%** | inf | 0% | yellow |
+| WBTC/USDT | $57.1M | 88% | 38% | **11.9%** | 7.5h | 0% | red |
+| cbBTC/PYUSD | $2.8M | 78% | 7% | **21.8%** | inf | 0% | yellow |
 
-| Market | TVL ($M) | Utilisation | $\Pr[\text{bd}>0]$ | bd $p_{99}$ | bd/TVL |
+alpha\* = stressed liquid stock / supply: the largest 24h outflow fraction the market absorbs (oracle at the window-worst price, recoveries from stress-liquidatable positions included, keeper executability enforced). Tier thresholds anchor to the framework's documented alpha calibration band: red < 10%, yellow < 30%, green >= 30%.
+
+#### Extreme scenario (class-aware drawdown, 35% outflows)
+
+| Market | dd applied | LSR (alpha=35%) | Latent insolvency | Illiquidity leg | Solvency leg |
 |---|---|---|---|---|---|
-| cbBTC/USDC | 268.0 | 91.0% | 46.0% | $5.30M | 1.98% |
-| wstETH/USDT | 218.0 | 77.9% | 3.0% | $4.78M | 2.19% |
-| WBTC/USDC | 156.1 | 91.0% | 43.5% | $2.13M | 1.37% |
-| wstETH/USDC | 44.4 | 91.1% | 23.5% | $1.05M | 2.36% |
-| cbBTC/PYUSD | 22.2 | 84.8% | 3.0% | $0.33M | 1.50% |
-| PT-reUSD-25JUN2026/USDC | 14.8 | 75.5% | 11.0% | $0.44M | 3.00% |
-| PT-apxUSD-18JUN2026/USDC | 13.8 | 63.5% | 32.5% | $0.51M | 3.67% |
+| weETH/PYUSD | 25% | 0.28 | 0.02% | FAIL | pass |
+| weETH/RLUSD | 25% | 0.28 | 0.11% | FAIL | pass |
+| wstETH/USDC | 25% | 0.28 | 0.00% | FAIL | pass |
+| cbBTC/USDC | 25% | 0.29 | 0.02% | FAIL | pass |
+| WBTC/USDC | 25% | 0.29 | 0.14% | FAIL | pass |
+| wstETH/USDT | 25% | 0.31 | 0.00% | FAIL | pass |
+| wstETH/WETH | 5% | 0.32 | 0.01% | FAIL | pass |
+| wstETH/WETH | 5% | 0.32 | 0.39% | FAIL | pass |
+| weETH/WETH | 5% | 0.33 | 0.01% | FAIL | pass |
+| WBTC/USDT | 25% | 0.34 | 0.69% | FAIL | pass |
+| cbBTC/PYUSD | 25% | 0.62 | 0.11% | FAIL | pass |
 
-The aggregate yellow-tier 99th-percentile bad-debt totals
-**approximately $14.5M**, concentrated on the four BTC/ETH-collateral
-mainstream markets (cbBTC/USDC, wstETH/USDT, WBTC/USDC, wstETH/USDC).
-These four markets carry $686M of TVL, or 40% of the analysed total.
+Latent insolvency = debt not covered by collateral on stressed oracle terms (Morpho.sol exhaustion condition), independent of keeper execution.
 
-### 4.5 The continuous LCR criterion
+#### Documented exclusions
 
-Across all 26 markets, $\Pr(\mathrm{LCR} < 1) = 0\%$ in our 200-path
-Monte Carlo. **No market falls below the LCR threshold of 1 under the
-scenario distribution we sampled.** This is a positive signal: under
-BCBS 238-aligned stress, Morpho Blue's overcollateralisation (typical
-average loan-to-value of $0.65 \times \mathrm{LLTV}$ in our calibration)
-combined with healthy Uniswap V3 secondary liquidity is sufficient to
-keep the High-Quality Liquid Asset coverage above stressed outflows.
+* **sUSDe/PYUSD**: no slippage curve (no quotes)
+* **sUSDS/USDT**: no slippage curve (no quotes)
+* **sUSDe/USDtb**: no slippage curve (no quotes)
+* **wsrUSD/USDC**: no slippage curve (no quotes)
+* **AA_FalconXUSDC/USDC**: no slippage curve (no quotes)
+* **syrupUSDC/RLUSD**: no slippage curve (no quotes)
+* **PT-apyUSD-18JUN2026/USDC**: no slippage curve (no quotes)
+* **LBTC/PYUSD**: no slippage curve (no quotes)
+* **msY/USDC**: no oracle price series (oracle interface not supported this window)
+* **PT-apxUSD-18JUN2026/USDC**: no slippage curve (no quotes)
+* **stcUSD/USDT**: no slippage curve (no quotes)
+* **sUSDat/AUSD**: no slippage curve (no quotes)
+* **stUSDS/USDC**: no slippage curve (no quotes)
+* **PT-reUSD-25JUN2026/USDC**: no slippage curve (no quotes)
+* **mF-ONE/USDC**: no slippage curve (no quotes)
+<!-- END GENERATED: report_results -->
 
-We caveat this finding heavily. The LCR criterion as parameterised here
-does not detect risks that materialise above the 99th percentile of
-the empirical drawdown distribution. To probe protocol behaviour under
-scenarios that exceed observed history, we run a separate extreme
-stress test, described next.
+### 4.5 The Monte Carlo companion: realized versus latent
+
+Two probabilities are reported per market over the empirical 24-hour
+drawdown distribution of its own oracle window (200 paths, seed 42):
+
+* **Realized bad debt** through the v1.1 liquidation engine. Under deep
+  slippage the keeper-rationality gate produces a keeper strike (no
+  execution), so realized bad debt is structurally near zero in stress:
+  this measures what the contract would book, not what the market owes.
+* **Latent insolvency**: debt not covered by collateral on stressed oracle
+  terms (the Morpho.sol exhaustion condition), computed analytically and
+  therefore immune to the keeper-strike regime. This is the solvency leg
+  that the tables report.
 
 ---
 
@@ -475,117 +502,38 @@ stress test, described next.
 
 ### 4bis.1 Calibration
 
-We define an **extreme scenario** combining the most adverse parameter
-values observed across the three calibration events:
+Outflow alpha is set to 35% (the KelpDAO + USDC-depeg hybrid anchor). The
+price shock is class-aware: 25% for volatile collateral, and for markets
+whose window-worst 24-hour drawdown is below 3% (redemption-arbitraged
+correlated pairs and yield-bearing stables) the shock is capped at three
+times the worst observed move, floored at 5%; a 25% shock on a
+redemption-arbitraged ratio would not be an economic scenario. The drawdown
+actually applied is reported per market.
 
-- **Drawdown** = 25%, between the USDC depeg trough (8%) and stETH
-  discount (8%), amplified to the 99.5th-percentile band of historical
-  DeFi stress events.
-- **Outflow $\alpha$** = 35%, between the KelpDAO 2026 24-hour Aave
-  outflow (~17%) and the USDC depeg day-one outflow (~25%), upper-
-  bounded by the most aggressive coordinated stress observed in the
-  Curve Wars episodes of 2023.
+### 4bis.2 Survival criterion, two legs
 
-Both parameters are held fixed (no Monte Carlo over the drawdown
-distribution; the extreme is a deterministic worst-case).
+A market fails the extreme test if either leg fails:
 
-### 4bis.2 Survival criterion
+* **Illiquidity leg**: LSR under the shocked oracle and 35% outflows falls
+  below 1.
+* **Solvency leg**: latent insolvency exceeds 10% of supply.
 
-A market `survives` the extreme scenario if **both** are true:
-
-- $\mathrm{LCR}_{\text{extreme}} \geq 1.0$
-- $\mathrm{bd}_{99} / \mathrm{TVL} < 10\%$
-
-The 10% threshold is the materiality cut-off used in capital adequacy
-frameworks (Tier 1 capital ratio thresholds in the Basel III risk-
-weighted-asset framework typically classify exposures above 10% loss-
-given-default as materially impaired).
+Reporting the legs separately is the point: a market can be illiquid and
+solvent, and on current books that is exactly what happens.
 
 ### 4bis.3 Result
 
-| Verdict | Markets | Aggregate Total Value Locked | Share of total |
-|---|---|---|---|
-| PASS | 18 | $1,220M | 71.9% |
-| FAIL | 8 | $476M | 28.1% |
-| **Total** | **26** | **$1,696M** | **100.0%** |
+See the extreme-scenario table in section 4.4 (generated block). The
+headline is the dichotomy itself: every evaluated market fails the
+liquidity leg while none fails the solvency leg.
 
-The eight markets that fail the extreme stress test are:
-
-| Market | TVL ($M) | bd $p_{99}$ ($M) | bd/TVL | Positions liquidated ($p_{99}$) |
-|---|---|---|---|---|
-| msY/USDC | 12.9 | 2.09 | 16.18% | 4 |
-| PT-reUSD-25JUN2026/USDC | 14.8 | 2.23 | 15.03% | 8 |
-| wstETH/USDC | 44.4 | 6.41 | 14.44% | 49 |
-| sUSDat/AUSD | 19.0 | 2.33 | 12.26% | 23 |
-| PT-apyUSD-18JUN2026/USDC | 23.1 | 2.48 | 10.74% | 66 |
-| wstETH/WETH (LLTV 96.50%) | 90.6 | 9.53 | 10.52% | 18 |
-| weETH/WETH (LLTV 94.50%) | 52.9 | 5.45 | 10.29% | 18 |
-| wstETH/USDT | 218.0 | 22.11 | 10.14% | 21 |
-
-Total bad debt under extreme stress, summed across the eight failing
-markets, is **approximately $52.6M**, or 3.1% of the analysed Total
-Value Locked.
-
-### 4bis.4 Reading the failures
-
-Three patterns emerge across the failing markets:
-
-**Pattern 1, Pendle principal tokens.** Two of the three Pendle PT
-markets in the roster fail. The cause is the combination of (a) the
-class-floored 15% drawdown which is itself plausible given the
-illiquidity of Pendle secondaries during stress, and (b) the steep
-slippage curve under our class default. PT tokens are structurally
-exposed to liquidity gap-risk during volatility regimes, and the
-framework consistently flags this.
-
-**Pattern 2, Liquid staking with high liquidation thresholds.** The
-two markets `wstETH/WETH (LLTV 96.50%)` and `weETH/WETH (LLTV 94.50%)`
-fail. These are leverage-tier markets (the protocol intentionally lists
-multiple instances per pair to offer different leverage profiles); the
-high liquidation threshold compresses the headroom between the average
-position loan-to-value (Beta-scaled at $0.65 \times \mathrm{LLTV} \approx 0.62$ for the 96.5%-tier) and the liquidation threshold.
-A 25% price drop sweeps a meaningful share of positions into
-liquidation. By contrast, the same pair listed at LLTV 86.50% passes
-the extreme test, illustrating the materiality of the LLTV choice for
-leveraged collateral.
-
-**Pattern 3, Exotic synthetic stablecoins.** Two markets, `msY/USDC`
-and `sUSDat/AUSD`, fail despite being classified as stablecoin
-synthetics. We caveat these results: both markets have very low
-Total Value Locked (under $20M) and few active positions (4 and 23
-respectively at the 99th percentile of liquidations). The Beta-scaled
-position distribution at low cardinality has high variance: with only
-a handful of positions, the framework over-estimates the impact of a
-single outlier. These two results merit further investigation in a
-production deployment with larger sample sizes.
-
-### 4bis.5 Notable corner cases
-
-Three results in the extreme-stress run merit investigation in a
-production setting and are reported here as **known limitations**:
-
-- **stcUSD/USDT**: passes the extreme test with zero positions
-  liquidated and zero bad debt. The synthetic stablecoin's price
-  feed may be partially insulated from the 25% drawdown injected
-  in the scenario; if the oracle returns a yield-adjusted price
-  rather than the spot, our scenario does not affect it. This warrants
-  inspection of the oracle configuration.
-
-- **LBTC/PYUSD**: passes with three positions liquidated but zero
-  realised bad debt. Liquidations close out cleanly at the
-  liquidation incentive threshold, leaving no residual loss.
-  Plausible given the small number of positions ($n = 7$) and a
-  benign Beta-scaled position distribution at this cardinality, but
-  worth verifying against position-level reconstruction.
-
-- **msY/USDC**: passes the nominal scenario as `green-strong` but fails
-  the extreme. As described in Pattern 3, this is plausibly an artefact
-  of small-sample variance in the position distribution rather than a
-  genuine structural weakness.
-
----
 
 ## 4ter. MetaMorpho vault curator discipline
+
+> **Status**: the figures in this section come from the v1.0 vault
+> enrichment run. Regenerate via `scripts/fetch_metamorpho_vaults.py` and
+> `scripts/generate_visualizations.py` before publication, or defer this
+> section to a follow-up post.
 
 ### 4ter.1 Motivation
 
@@ -695,6 +643,32 @@ current roster size.
 
 ---
 
+## 4quater. What changed versus v1.0, and why the panorama moved
+
+The v1.1 engine applies the corrections catalogued in
+[docs/MODEL_CORRECTIONS.md](MODEL_CORRECTIONS.md) (C1 to C7), and the
+evaluation chain replaces two v1.0 inputs wholesale:
+
+* **Real position books instead of synthetic ones.** v1.0's forward
+  panorama drew position-level loan-to-values from a Beta-scaled synthetic
+  distribution (average 0.65 x LLTV by construction). v1.1 evaluates the
+  actual onchain positions served by the Morpho API, with per-market
+  borrow-share coverage checked against market state.
+* **Measured exit depth instead of class defaults.** v1.0 priced exotic
+  collateral with asset-class default slippage parameters. v1.1 fits
+  power-law curves on quoted depth: Uniswap V3 for majors, keyless
+  aggregator quotes (CoW Protocol, KyberSwap) rebased on the smallest
+  executed size for yield-bearing wrappers, and a conservative flat
+  fallback for venues too deep to move.
+
+Directionally, three v1.0 artefacts inflated resilience: liquidation
+recoveries were double-counted in the coverage ratio (C6), non-callable
+healthy debt was counted as monetisable stock (C4), and synthetic books
+were more conservative than the real ones in some markets and less in
+others. The v1.0 finding that no market breached the coverage threshold
+does not survive these corrections; the survival-frontier table above is
+the corrected statement.
+
 ## 5. What this work does not establish
 
 We list these explicitly because they materially affect the
@@ -745,6 +719,23 @@ risk reporting often omits such caveats.
 ---
 
 ## 6. Reproducibility
+
+The full v1.1 chain, from empty cache to this document's figures:
+
+```
+python scripts/fetch_markets.py
+python scripts/fetch_tvl.py
+python scripts/fetch_market_state.py
+python scripts/fetch_oracle_prices.py
+python scripts/fetch_events.py            # optional for the evaluation
+python scripts/fetch_positions_api.py     # live position book
+python scripts/fetch_uniswap_quotes.py    # majors depth
+python scripts/fetch_agg_quotes.py        # exotic depth, keyless
+python scripts/run_evaluation.py          # -> docs/evaluation_results.csv
+python scripts/generate_report_tables.py  # -> docs/_generated/*.md
+python scripts/assemble_docs.py           # splices figures into the docs
+```
+
 
 The full pipeline is open-source. Key features:
 

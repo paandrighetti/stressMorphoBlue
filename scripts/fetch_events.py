@@ -63,10 +63,14 @@ EVENT_TYPE_TO_API = {
 }
 
 
-# GraphQL query — schema confirmed against Morpho docs (Feb 2026 snapshot).
+# GraphQL query — validated against the Morpho API as of July 2026.
 # Filters: marketUniqueKey_in (array), type_in (array of TransactionType enum).
 # We do NOT filter by timestamp in the query (not supported); apply
 # client-side after fetching.
+# Schema-drift note (2026-07): the API removed `uniqueKey` from the `Market`
+# type reachable through transaction data, which used to 400 the whole fetch.
+# We never needed it: the market identity comes from the $marketUniqueKey
+# filter variable, so the selection was dropped entirely.
 EVENTS_QUERY = """
 query MarketEvents(
   $first: Int!
@@ -94,7 +98,6 @@ query MarketEvents(
         ... on MarketTransferTransactionData {
           assets
           shares
-          market { uniqueKey }
         }
         ... on MarketLiquidationTransactionData {
           repaidAssets
@@ -103,7 +106,6 @@ query MarketEvents(
           badDebtAssets
           badDebtShares
           liquidator
-          market { uniqueKey }
         }
       }
     }

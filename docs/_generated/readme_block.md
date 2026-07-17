@@ -1,0 +1,1 @@
+**Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 11 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.9%, minimum 9.8%; tiers 7 red, 4 yellow, 0 green. Extreme scenario: 11/11 fail on liquidity, 0/11 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.

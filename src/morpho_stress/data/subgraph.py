@@ -12,13 +12,38 @@ from collections.abc import Iterator
 from typing import Any
 
 import httpx
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
 
 class SubgraphError(RuntimeError):
     """Raised when the subgraph returns a structured GraphQL error."""
+
+
+def _is_retryable_http_error(exc: BaseException) -> bool:
+    """True if we should retry the HTTP call.
+
+    Retry on:
+        - Network errors (connection reset, timeout, etc.)
+        - Server errors (5xx)
+        - SubgraphError (server-side GraphQL error, may be transient)
+    Do NOT retry on:
+        - 4xx client errors (validation failures, malformed queries) — these
+          are deterministic and will not change on retry; retrying just
+          delays the inevitable failure and produces noisy logs.
+    """
+    if isinstance(exc, httpx.HTTPStatusError):
+        status = exc.response.status_code
+        if 400 <= status < 500:
+            return False
+        return True
+    if isinstance(exc, httpx.HTTPError):
+        # Network-level error (timeout, connection reset, etc.)
+        return True
+    if isinstance(exc, SubgraphError):
+        return True
+    return False
 
 
 class SubgraphClient:
@@ -47,7 +72,7 @@ class SubgraphClient:
     @retry(
         stop=stop_after_attempt(4),
         wait=wait_exponential(multiplier=1, min=2, max=20),
-        retry=retry_if_exception_type((httpx.HTTPError, SubgraphError)),
+        retry=retry_if_exception(_is_retryable_http_error),
         reraise=True,
     )
     def _post(self, query: str, variables: dict[str, Any]) -> dict[str, Any]:

@@ -17,6 +17,7 @@ from morpho_stress.backtest import (
     synthesize_uniswap_swaps,
 )
 from morpho_stress.models.slippage import SlippageCurve
+from morpho_stress.scenarios.liquidation import liquidation_incentive_factor
 from morpho_stress.utils.mock import make_market_state
 
 
@@ -142,17 +143,36 @@ def test_recovery_capped_at_debt() -> None:
     assert bd == 0.0
 
 
-def test_recovery_high_slippage_creates_bad_debt() -> None:
+def test_recovery_unexecutable_at_deep_slippage() -> None:
+    """v1.1 (C4): at deep stress slippage the DEX resale cannot cover the
+    oracle-terms repayment, so no rational keeper executes within the horizon:
+    the position delivers neither recovery nor a realised write-off."""
     state = make_market_state(n_positions=5)
     bad_curve = SlippageCurve(asset_symbol="X", a=0.5, b=0.6, max_slippage=0.5)
-    # Position: 1 ETH collateral, $1900 debt at $2000/ETH (LTV=0.95, > LLTV)
-    # With 50% slippage, only $1000 recovered → $900 bad debt
     rec, bd = position_recovery_value(
         state=state, collateral_amount=1.0, borrow_assets=1900.0,
         market_price=2000.0, slippage_curve=bad_curve,
     )
+    assert rec == 0.0
+    assert bd == 0.0
+
+
+def test_recovery_collateral_exhaustion_creates_bad_debt() -> None:
+    """v1.1 (C1): bad debt is realised only on collateral exhaustion, per
+    Morpho.sol semantics: repaid = seized * oracle / LIF, shortfall written
+    off; the mild-slippage resale keeps the liquidation executable."""
+    state = make_market_state(n_positions=5)
+    mild = SlippageCurve(asset_symbol="X", a=1e-5, b=0.4)
+    oracle = state.oracle_price
+    debt = 1.5 * oracle  # 1 unit of collateral cannot cover debt*LIF/oracle
+    rec, bd = position_recovery_value(
+        state=state, collateral_amount=1.0, borrow_assets=debt,
+        market_price=oracle, slippage_curve=mild,
+    )
+    lif = liquidation_incentive_factor(state.params.lltv)
+    assert math.isclose(rec, oracle / lif, rel_tol=1e-9)
+    assert math.isclose(bd, debt - rec, rel_tol=1e-9)
     assert bd > 0
-    assert rec + bd <= 1900.0 + 1e-6
 
 
 # ---------------------------------------------------------------------------

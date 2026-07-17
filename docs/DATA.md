@@ -346,7 +346,7 @@ markets, likely wstETH/WETH and cbBTC/USDC.
 The repository root holds `config.yaml`:
 
 ```yaml
-# config.yaml — TEMPLATE
+# config.yaml TEMPLATE
 # Copy to config.local.yaml and fill in secrets via environment variables.
 
 network:
@@ -355,7 +355,7 @@ network:
   rpc_url_fallback: "https://eth.llamarpc.com"
 
 morpho_blue:
-  contract: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFFb"  # placeholder
+  contract: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFFb"  # Morpho Blue singleton (Ethereum mainnet)
 
 subgraph:
   url: "https://api.thegraph.com/subgraphs/name/morpho-org/morpho-blue"

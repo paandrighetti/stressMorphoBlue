@@ -77,22 +77,19 @@ def test_accrue_no_time_elapsed_is_identity() -> None:
     assert r == 0.04
 
 
-def test_accrue_increases_borrow_more_than_supply() -> None:
-    """Borrow grows by full interest, supply grows by net (after fee)."""
+def test_accrue_supply_receives_full_interest() -> None:
+    """Contract-faithful (C5): totalSupplyAssets accrues the FULL interest;
+    the fee is a split of supply via fee-recipient shares, not a leak, so the
+    S - B liquidity margin matches the contract."""
     s0, b0 = 100.0, 80.0
     fee = 0.10
-    # Freeze rate_at_target update for this test — we want pure interest accrual semantics
     s1, b1, _ = accrue(
         s0, b0, fee, 0.10, IrmParams(), 365 * 24 * 3600, update_target=False
     )
     delta_b = b1 - b0
     delta_s = s1 - s0
-    # delta_s should be ~ delta_b * (1 - fee)
-    assert math.isclose(delta_s, delta_b * (1 - fee), rel_tol=1e-9)
-    # Borrow grew, supply grew, neither overshot
+    assert math.isclose(delta_s, delta_b, rel_tol=1e-12)
     assert delta_b > 0
-    assert delta_s > 0
-    assert delta_s < delta_b
 
 
 def test_accrue_one_year_at_known_rate() -> None:
@@ -176,16 +173,11 @@ def test_update_at_target_zero_elapsed_is_identity() -> None:
 
 
 def test_adaptive_doubling_time() -> None:
-    """At full deviation (U=1, U_target=0.9), the doubling time is approx
-    ln(2) × max(U_t, 1-U_t) / speed years.
-
-    With speed=50 and U_target=0.9, max(0.9, 0.1) = 0.9, so doubling time
-    ≈ ln(2) × 0.9 / 50 ≈ 0.01247 year ≈ 4.55 days.
-    """
+    """At full deviation above target (U=1, U_target=0.9), the contract's
+    piecewise normaliser gives err = (1 - 0.9)/(1 - 0.9) = 1, so the doubling
+    time is ln(2)/speed years: ln(2)/50 ≈ 0.01386 year ≈ 5.1 days (C5)."""
     params = IrmParams(adjustment_speed=50.0, target_utilization=0.9)
-    # Actually for U=1, err = (1-0.9)/0.9 = 0.111. doubling: ln(2) / (speed × err)
-    # = ln(2) / (50 × 0.111) = 0.693 / 5.555 = 0.1247 year ≈ 45.5 days
-    elapsed = int(0.1247 * 365 * 24 * 3600)
+    elapsed = int(math.log(2) / 50.0 * 365 * 24 * 3600)
     new_rat = update_rate_at_target(0.04, utilization=1.0, params=params, elapsed_seconds=elapsed)
     assert math.isclose(new_rat, 0.08, rel_tol=0.05)  # 5% tolerance
 

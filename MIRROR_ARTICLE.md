@@ -1,8 +1,4 @@
-# A Liquidity Stress Test for Morpho Blue, Adapted from Basel III
-
-**A reproducible, falsifiable risk framework applied to 26 live Ethereum mainnet markets.**
-
----
+> **DRAFT. Regenerate every figure and table with the v1.1 engine before publishing (docs/MODEL_CORRECTIONS.md).**
 
 ## Why this matters
 
@@ -10,7 +6,7 @@ Decentralised-finance lending protocols hold tens of billions of dollars of depo
 
 This work formalises the transposition for **Morpho Blue**, the non-custodial lending protocol with isolated markets and immutable parameters. We adapt the **Liquidity Coverage Ratio** defined by the Basel Committee on Banking Supervision in BCBS 238 (2013) and apply it to live on-chain data.
 
-The full source code, test suite, and reproducible event fixtures are open-source. All 145 tests pass; all 26 markets are evaluated from live mainnet state, no synthetic data.
+The full source code, test suite, and reproducible event fixtures are open-source. All tests pass; the 26-market evaluation is computed from a live mainnet snapshot. A separate forward-looking module ships as an explicitly synthetic v0 demonstration and feeds none of the figures.
 
 ---
 
@@ -18,7 +14,7 @@ The full source code, test suite, and reproducible event fixtures are open-sourc
 
 For each market, three pass-or-fail criteria, all sourced from the spirit of BCBS 238:
 
-1. **Continuous Liquidity Coverage Ratio**: probability that High-Quality Liquid Assets fall below stressed outflows under a 24-hour scenario, denoted Pr(LCR < 1).
+1. **Continuous liquidity coverage**: probability that the liquid stock falls below stressed outflows under a 24-hour scenario, denoted Pr(LSR-24 < 1). The metric is LCR-inspired; BCBS 238 itself defines a 30-day horizon.
 2. **Time-to-illiquid**: hours before instant liquidity is exhausted under a calibrated outflow rate.
 3. **Bad-debt magnitude**: 99th-percentile bad debt expressed as a fraction of Total Value Locked.
 
@@ -34,7 +30,7 @@ The framework is anchored on three historical stress events:
 - **USDC depeg** (March 2023), with -8% trough, ~25% day-one Aave outflow.
 - **Staked-Ether discount episode** (May 2022), -8% trough over multiple days.
 
-Two events PASS the framework's pre-event detection criteria. The third (stETH 2022) FAILs honestly: the framework is a 24-hour LCR test and the stETH episode was a multi-day repricing rather than an acute liquidity stress. We report this failure rather than retrofitting parameters to make it pass.
+Two events PASS the framework's pre-event detection criteria. The third (stETH 2022) FAILs honestly: the framework is a 24-hour survival test (LSR-24) and the stETH episode was a multi-day repricing rather than an acute liquidity stress. We report this failure rather than retrofitting parameters to make it pass.
 
 **Class-floored drawdowns** for forward-looking stress, calibrated per asset class against the events above:
 
@@ -54,50 +50,19 @@ For each market we run two stress scenarios in parallel rather than cumulating b
 
 ---
 
-## Findings, nominal stress
+## Findings
 
-Applied to the **26 most material Morpho Blue isolated markets on Ethereum mainnet** (aggregate Total Value Locked ~$1.7B):
+<!-- BEGIN GENERATED: mirror_findings -->
+Across 11 evaluated markets, the survival frontier, the largest 24-hour outflow a market absorbs from instantaneous liquidity plus stress-liquidatable recoveries, ranges from 9.8% (weETH/PYUSD) to 21.8% (cbBTC/PYUSD), median 10.9%. The binding variable is utilisation, not collateral class.
 
-| Tier | Markets | TVL | Share |
-|---|---|---|---|
-| red | 1 | $23M | 1.4% |
-| yellow | 7 | $737M | 43.5% |
-| green-watch | 5 | $384M | 22.6% |
-| green-strong | 13 | $552M | 32.6% |
+The second axis is the mirror image: under a class-aware extreme scenario, 11 of 11 markets fail on liquidity while 0 fail on solvency; latent insolvency stays below 0.7% of supply everywhere. Position books are conservative; liabilities are not.
 
-The single **red** market is **PT-apyUSD-18JUN2026/USDC**, a Pendle principal-token market with 99th-percentile bad debt at 5.7% of TVL and 68.5% probability of positive bad debt across Monte Carlo paths. Two compounding factors: the structural illiquidity of Pendle secondary markets (slippage parameters $a = 10^{-3}$, $b = 0.65$) and a high utilisation (82.6%) that compresses the headroom available for liquidation cascades.
-
-The **yellow** tier carries the bulk of material exposure in absolute dollar terms:
-
-| Market | TVL | Bad-debt p99 | bd/TVL |
-|---|---|---|---|
-| cbBTC/USDC | $268M | $5.30M | 1.98% |
-| wstETH/USDT | $218M | $4.78M | 2.19% |
-| WBTC/USDC | $156M | $2.13M | 1.37% |
-| wstETH/USDC | $44M | $1.05M | 2.36% |
-
-These four mainstream BTC/ETH-collateral markets carry $686M of TVL (40% of analysed total) and roughly $13.3M of cumulative 99th-percentile bad debt.
-
----
-
-## Findings, extreme stress
-
-To probe the protocol under conditions exceeding observed history, we run a separate test: drawdown 25%, outflow alpha 35%, calibrated against the KelpDAO + USDC depeg hybrid. A market `survives` if both LCR ≥ 1.0 AND 99th-percentile bad debt < 10% TVL.
-
-| Verdict | Markets | TVL | Share |
-|---|---|---|---|
-| PASS | 18 | $1,220M | 71.9% |
-| **FAIL** | **8** | **$476M** | **28.1%** |
-
-**The 28.1% TVL at risk under extreme stress is the headline number.** The eight failing markets cluster on:
-
-1. **Pendle principal tokens.** Two of the three PT markets fail. Cause: low secondary-market liquidity amplified by the 25% drawdown.
-2. **Leveraged liquid staking at high liquidation thresholds.** wstETH/WETH (LLTV 96.5%) and weETH/WETH (LLTV 94.5%) fail. The same pair listed at LLTV 86% passes. The leverage tier matters.
-3. **Exotic synthetic stablecoins.** msY/USDC and sUSDat/AUSD fail despite being classified as stablecoin-synthetic. Both have very low Total Value Locked (under $20M) and few active positions; we caveat these as plausible artefacts of small-sample variance in the Beta-scaled position distribution.
-
----
+Versus v1.0: the earlier yellow/green tiering was an artefact of a structural double-count (recoveries in both numerator and netted outflows, correction C6) compounded by non-callable healthy debt counted as monetisable (C4). The v1.1 engine removes both and reports what remains: a liquidity question that rate-driven replenishment, not modelled in this version, answers in practice.
+<!-- END GENERATED: mirror_findings -->
 
 ## Findings, MetaMorpho curator discipline
+
+> *(v1.0 enrichment figures; regenerate or defer to a follow-up before publishing.)*
 
 Beyond the per-market view, we apply the tier classification to score the **discipline of the top 20 MetaMorpho vaults** by Total Value Locked. The score is a TVL-weighted exposure to severity tiers (red=4, yellow=2, green-watch=1, green-strong=0). A score of 0 is fully conservative; 2 is significant yellow exposure; above 2 warrants curator-side review.
 
