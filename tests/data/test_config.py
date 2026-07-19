@@ -19,7 +19,6 @@ VALID_CONFIG = {
     },
     "morpho_blue": {"contract": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFFb"},
     "subgraph": {"url": "https://api.thegraph.com/morpho-blue"},
-    "oneinch": {"api_url": "https://api.1inch.dev/swap/v6.0/1"},
     "sampling": {
         "market_state_period_blocks": 1800,
         "oracle_price_period_blocks": 300,

@@ -92,7 +92,7 @@ for i, (bar, score, tvl) in enumerate(zip(bars, scores, tvls)):
 ax.set_yticks(y_pos)
 ax.set_yticklabels(labels, fontsize=8)
 ax.set_xlabel("Curator discipline score (lower = more conservative)", fontsize=10)
-ax.set_title("MetaMorpho vault curator discipline — top 20 vaults by TVL\n"
+ax.set_title("MetaMorpho vault curator discipline: top 20 vaults by TVL\n"
              "Score = TVL-weighted exposure to framework severity tiers (red=4, yellow=2, green-watch=1, green-strong=0)",
              fontsize=11, loc="left", pad=15)
 ax.set_xlim(0, 2.4)
@@ -243,7 +243,7 @@ for i, (bar, m) in enumerate(zip(bars, fail_markets)):
 ax.set_yticks(y)
 ax.set_yticklabels(mk_names, fontsize=8)
 ax.set_xlabel("99th-percentile bad debt as % of market TVL", fontsize=10)
-ax.set_title("Extreme stress test — markets that FAIL the survival criterion\n"
+ax.set_title("Extreme stress test: markets that FAIL the survival criterion\n"
              "Scenario: drawdown 25% + outflow alpha 35% (KelpDAO 2026 + USDC depeg 2023 hybrid)\n"
              "FAIL = LCR < 1 OR p99 bad debt > 10% TVL.   8 of 26 markets fail, $476M aggregate TVL (28.1% of analysed total)",
              fontsize=10, loc="left", pad=15)

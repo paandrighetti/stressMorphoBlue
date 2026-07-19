@@ -1,3 +1,5 @@
+> **Note (v1.1)**: the forward-looking calibration tables in this document (asset-class drawdown floors, Scenario A/B) are superseded by REPORT.md section 4.2; the alpha construction and backtest calibration remain normative. See docs/MODEL_CORRECTIONS.md.
+
 # Methodology: Liquidity Stress Testing Framework for Morpho Blue
 
 > Version: 0.3. Last updated: May 2026

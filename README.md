@@ -5,8 +5,7 @@
 > regulatory standards (specifically the Liquidity Coverage Ratio of
 > document BCBS 238, 2013).
 
-**Status**: v1.0 research release (Phases 0 to 7 complete, 145 tests
-passing). Not a production risk system. Not investment advice.
+**Status**: v1.1 engine (contract-faithful liquidation accounting, IRM accrual, single-counted LSR-24; corrections catalogued in [docs/MODEL_CORRECTIONS.md](./docs/MODEL_CORRECTIONS.md)). 146 tests passing. Headline figures are generated from `docs/evaluation_results.csv` by `scripts/generate_report_tables.py` and injected by `scripts/assemble_docs.py`, never hand-transcribed. Not a production risk system. Not investment advice.
 
 ---
 
@@ -88,7 +87,7 @@ morpho-blue-liquidity-stress/
 │   ├── enrich_forward_looking.py    # Build profiles + run evaluation
 │   ├── fetch_metamorpho_vaults.py   # MetaMorpho vault curator discipline
 │   └── diagnose_corner_cases.py     # Investigate edge-case markets
-├── tests/                   # pytest suite (145 tests)
+├── tests/                   # pytest suite (146 tests)
 └── README.md
 ```
 
@@ -104,7 +103,8 @@ morpho-blue-liquidity-stress/
 | **3** | Modelling: AdaptiveCurveIRM, slippage curve, S1 (withdrawal run), liquidation engine | Done |
 | **3.5** | AdaptiveCurveIRM full-adaptive layer, geometric Time-Weighted Average Price oracle, S3 (oracle deviation), Monte Carlo, property-based tests | Done |
 | **4** | Historical-backtest framework (`docs/BACKTEST.md`) and three event fixtures | Done, three of three events processed |
-| **5** | Version-0.3 framework, decoupled stress scenarios (price-stress and liquidity-stress), continuous LCR criterion, Beta-scaled position distribution, asset-class slippage and drawdown calibration, extreme stress test, forward-looking analysis on 26 live markets | Done |
+| **5** | Version-0.3 framework, decoupled stress scenarios (price-stress and liquidity-stress), continuous LCR criterion, Beta-scaled position distribution, asset-class slippage and drawdown calibration, extreme stress test, forward-looking analysis on 26 live markets (superseded by v1.1; see docs/MODEL_CORRECTIONS.md) | Done |
+| **6** | v1.1: contract-faithful engine (C1-C7), live-position evaluation via the Morpho API, keyless multi-venue depth (Uniswap quoter, CoW Protocol, KyberSwap, Pendle router), survival-frontier panorama, generated-figures publication chain | Done |
 | **6** | Public deliverables (Dune dashboard, Mirror article, public-facing summary) | Done |
 | **7** | Empirical position-level reconstruction (`scripts/enrich_positions.py`), MetaMorpho vault curator discipline score (`scripts/fetch_metamorpho_vaults.py`), corner case diagnostic (`scripts/diagnose_corner_cases.py`), multi-day NSFR-style horizon (`--horizon-days N`), benchmark vs incumbent frameworks (`docs/BENCHMARK.md`) | Done |
 
@@ -117,7 +117,7 @@ mainnet; evaluated coverage and headline figures are generated from
 `docs/evaluation_results.csv`, never hand-transcribed.
 
 <!-- BEGIN GENERATED: readme_block -->
-**Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 11 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.9%, minimum 9.8%; tiers 7 red, 4 yellow, 0 green. Extreme scenario: 11/11 fail on liquidity, 0/11 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
+**Snapshot**: 2026-07-16, state block 25,545,086. **Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 24 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.7%, minimum 1.0%; tiers 16 red, 7 yellow, 1 green. Extreme scenario: 20/24 fail on liquidity, 0/24 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
 <!-- END GENERATED: readme_block -->
 
 ## Quick start
@@ -127,7 +127,7 @@ mainnet; evaluated coverage and headline figures are generated from
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
-# Run the test suite (145 tests, approximately 2 minutes)
+# Run the test suite (146 tests, approximately 2 minutes)
 PYTHONPATH=src pytest tests/ -v
 
 # Run the Phase-5 end-to-end demonstration

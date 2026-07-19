@@ -1,10 +1,10 @@
-"""scripts/fetch_tvl.py — fetch Morpho Blue Total Value Locked time series from DeFiLlama.
+"""scripts/fetch_tvl.py: fetch Morpho Blue Total Value Locked time series from DeFiLlama.
 
 Pulls the daily Total Value Locked time series for the Morpho Blue
 protocol from DeFiLlama's public API (no authentication required).
 
 Output:
-    data/cache/tvl_daily.parquet — schema='tvl_daily'
+    data/cache/tvl_daily.parquet: schema='tvl_daily'
 
 Usage:
     python scripts/fetch_tvl.py [--protocol morpho-blue]

@@ -1,14 +1,14 @@
-"""scripts/select_markets.py — discover top-N Morpho Blue markets by Total Supply.
+"""scripts/select_markets.py: discover top-N Morpho Blue markets by Total Supply.
 
 Queries the Morpho official GraphQL API at api.morpho.org/graphql, which is
 the canonical source for Morpho protocol data (no API key required, public).
 
 Output:
-    markets_top.yaml — to be appended/merged into config.local.yaml manually,
+    markets_top.yaml: to be appended/merged into config.local.yaml manually,
         OR with --in-place to patch config.local.yaml directly.
 
 Usage:
-    python scripts/select_markets.py --top 20 --in-place
+    python scripts/select_markets.py --top 10 --in-place
 
 Note on the API endpoint:
     The official Morpho GraphQL API is at https://api.morpho.org/graphql.
@@ -87,7 +87,7 @@ def _format_market_summary(m: dict) -> str:
     default="config.local.yaml",
     type=click.Path(exists=True, dir_okay=False),
 )
-@click.option("--top", "top_n", default=20, type=int, help="Number of markets to select")
+@click.option("--top", "top_n", default=10, type=int, help="Number of markets to select")
 @click.option(
     "--output",
     "output_path",
@@ -132,7 +132,7 @@ def main(config_path: str, top_n: int, output_path: str, in_place: bool) -> None
 
     logger.info("Found %d markets (%d active):", len(markets), len(active_markets))
     for i, m in enumerate(active_markets, 1):
-        logger.info("  [%d] id=%s — %s", i, m.get("uniqueKey", "?"), _format_market_summary(m))
+        logger.info("  [%d] id=%s: %s", i, m.get("uniqueKey", "?"), _format_market_summary(m))
 
     if not active_markets:
         raise click.ClickException("No active markets (with collateral) found")

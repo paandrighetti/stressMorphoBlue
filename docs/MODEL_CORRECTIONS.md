@@ -31,3 +31,16 @@ no mempool latency.
    under C5/C6 (both corrected biases were optimistic); report the v1.1 labels.
 5. Add differential tests against Morpho.sol and AdaptiveCurveIrm.sol
    behaviour on recorded mainnet transactions (backlog).
+
+## Evaluation-chain changes (beyond the engine)
+
+Alongside C1 to C7, the v1.1 evaluation chain replaced two v1.0 inputs
+wholesale: position books are the actual onchain positions served by the
+Morpho API (per-market borrow-share coverage checked against market
+state) instead of Beta-scaled synthetic distributions, and exit depth is
+measured (Uniswap V3 quoter; keyless CoW Protocol and KyberSwap quotes
+rebased on the smallest executed size; a Pendle-router conversion path for principal tokens, unused at the first v1.1 snapshot because the roster's PTs are past maturity) instead of asset-class default parameters. The
+panorama's primary metric became the survival frontier alpha\*, and all
+published figures flow through `run_evaluation.py`,
+`generate_report_tables.py` and `assemble_docs.py` without manual
+transcription.

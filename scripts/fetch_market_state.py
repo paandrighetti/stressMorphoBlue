@@ -1,4 +1,4 @@
-"""scripts/fetch_market_state.py — fetch (S, B, U) time series per market.
+"""scripts/fetch_market_state.py: fetch (S, B, U) time series per market.
 
 Reads `markets.parquet` (produced by `fetch_markets.py`) and queries the
 Morpho Blue contract's `market(id)` view function at sampled block heights
@@ -13,7 +13,7 @@ across the configured time range, building a time series of:
       script). For now: 0.0 placeholder.
 
 Output:
-    data/cache/market_state.parquet — schema='market_state'
+    data/cache/market_state.parquet: schema='market_state'
 
 Sampling cadence:
     Read from `config.sampling.market_state_period_blocks` (default: 1800,
@@ -66,7 +66,7 @@ def _block_range_for_window(
 
     Uses a binary-search-free approximation: assume average 12s block time
     on Ethereum mainnet. For higher precision, use a binary search via
-    `eth_getBlockByNumber` — but the precision is not critical for our
+    `eth_getBlockByNumber`: but the precision is not critical for our
     sampling: errors of ±100 blocks (~20 minutes) at the boundaries don't
     affect aggregate analytics.
     """

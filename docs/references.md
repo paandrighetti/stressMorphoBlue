@@ -171,9 +171,9 @@ framework. Definitions of all specialised terms used below are in
 - **Used for**: market selection (top-N by Total Value Locked) and
   Total-Value-Locked time series.
 
-### E.4 1inch, Uniswap V3, CoW Swap: decentralised-exchange liquidity
+### E.4 Uniswap V3, CoW Protocol, KyberSwap, Pendle: decentralised-exchange liquidity
 
-- 1inch Pathfinder application programming interface, Uniswap V3
+- Uniswap V3 QuoterV2, CoW Protocol quote API, KyberSwap aggregator API, Pendle hosted API
   ticks, CoW Swap.
 - **Used for**: realised decentralised-exchange-slippage estimation
   feeding the High Quality Liquid Assets Level-2A haircut

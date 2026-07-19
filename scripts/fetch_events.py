@@ -1,4 +1,4 @@
-"""scripts/fetch_events.py — fetch Morpho Blue events via the Morpho API.
+"""scripts/fetch_events.py: fetch Morpho Blue events via the Morpho API.
 
 Uses the documented `transactions` query at api.morpho.org/graphql with
 `type_in` filter and `marketUniqueKey_in` filter (both validated against
@@ -63,7 +63,7 @@ EVENT_TYPE_TO_API = {
 }
 
 
-# GraphQL query — validated against the Morpho API as of July 2026.
+# GraphQL query: validated against the Morpho API as of July 2026.
 # Filters: marketUniqueKey_in (array), type_in (array of TransactionType enum).
 # We do NOT filter by timestamp in the query (not supported); apply
 # client-side after fetching.
@@ -321,7 +321,7 @@ def main(config_path: str, markets_input: str, output_dir: str, event_types: str
                     m["collateral_asset_decimals"],
                 )
                 logger.info(
-                    "  %s/%s — %s: %d events",
+                    "  %s/%s: %s: %d events",
                     m["collateral_asset_symbol"],
                     m["loan_asset_symbol"],
                     event_type,

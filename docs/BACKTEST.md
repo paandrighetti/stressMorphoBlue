@@ -126,7 +126,7 @@ current Morpho Blue practice:
   parameters;
 - The position distribution is sampled from a synthetic but realistic
   distribution (50 to 200 positions, log-normal sizes, loan-to-value
-  drawn from a Beta distribution centred near 0.7).
+  drawn from a Beta distribution centred near 0.7). Recorded aggregates anchor the totals; the individual split is a synthetic reconstruction, a documented limitation of the backtest fixtures (the forward panorama, by contrast, evaluates the actual onchain book since v1.1).
 
 This is **not a true backtest of historical Morpho Blue performance**.
 It is a "what-if" stress: had Morpho Blue existed with realistic

@@ -1,4 +1,4 @@
-"""scripts/fetch_uniswap_quotes.py — slippage curve calibration via Uniswap V3 Quoter.
+"""scripts/fetch_uniswap_quotes.py: slippage curve calibration via Uniswap V3 Quoter.
 
 Replaces the previous 1inch-based approach (which required an account and
 KYC) with direct on-chain quotes from the Uniswap V3 QuoterV2 contract.
@@ -9,7 +9,7 @@ $\\pi(V) = a \\cdot V^b$. Output is suitable for `slippage_fit.py` to fit
 the parametric form via ordinary least squares regression.
 
 Output:
-    data/cache/dex_slippage.parquet — schema='dex_slippage'
+    data/cache/dex_slippage.parquet: schema='dex_slippage'
 
 Usage:
     python scripts/fetch_uniswap_quotes.py --config config.local.yaml
@@ -25,7 +25,7 @@ Note on fee tiers:
     a robust view across fee tiers.
 
 Note on which liquidity is queried:
-    The Quoter routes through Uniswap V3 only — it does NOT aggregate
+    The Quoter routes through Uniswap V3 only: it does NOT aggregate
     across CowSwap, Curve, Balancer, etc. For collateral types primarily
     traded on Curve (e.g. stETH-WETH) or Balancer (e.g. some LRTs), the
     Uniswap V3 quote will overstate slippage. For cross-DEX coverage,
@@ -191,7 +191,7 @@ def main(
             continue
 
         if mid not in latest_prices:
-            logger.warning("No oracle price for %s — cannot convert USD volume", mid)
+            logger.warning("No oracle price for %s: cannot convert USD volume", mid)
             continue
 
         coll_usd_price = latest_prices[mid]

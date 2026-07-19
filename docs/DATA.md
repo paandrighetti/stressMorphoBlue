@@ -28,7 +28,7 @@ layer.
 | Market state (total supply, total borrow, supply-and-borrow shares, accruals) | Remote Procedure Call (the protocol used to communicate with a blockchain node from off-chain software, abbreviated *RPC* hereafter), specifically `eth_call` on the Morpho Blue contract at specific block heights | Exact, deterministic, safe from chain reorganisation at depth $\geq 32$ blocks | Subgraph (which has higher latency and reorganisation risk) |
 | Events (Supply, Withdraw, Borrow, Repay, Liquidate) | Subgraph (Morpho hosted on The Graph protocol) | Native event indexing | RPC `eth_getLogs` for spot validation |
 | Oracle prices (per market oracle configuration) | RPC `latestRoundData` for Chainlink, equivalent calls for Pyth and Redstone | Same oracle the contract reads | Off-chain centralised-exchange feed (Binance, Coinbase) |
-| Decentralised-exchange liquidity and realised slippage | 1inch quote application programming interface (forward-looking) and Uniswap V3 historical swaps via subgraph (backward-looking) | Forward-looking quotes feed scenarios; historical fills feed calibration | Cross-check via CoW Swap fills |
+| Decentralised-exchange liquidity and realised slippage | Uniswap V3 quoter for majors; keyless CoW Protocol and KyberSwap quote APIs for yield-bearing and exotic collateral; Pendle router curves for principal tokens | Executable exit depth at quote time feeds the slippage fits | Cross-venue comparison at overlapping sizes |
 | Aggregate Total Value Locked and market metadata | DeFiLlama application programming interface | Single endpoint, cached | DeFiLlama webpage |
 | Liquidation history (executed) | Subgraph `Liquidate` events | Native | RPC `eth_getLogs` |
 | MetaMorpho vault allocations | RPC `MetaMorpho.config()` and balance queries | Exact | Subgraph |
@@ -48,7 +48,7 @@ data/
 │   ├── subgraph/                 # GraphQL response JSON (gzipped)
 │   ├── rpc/                      # Block-state RPC responses (JSON-LD)
 │   ├── oracle/                   # Per-block oracle reads
-│   └── dex/                      # 1inch quotes plus Uniswap swaps
+│   └── dex/                      # Uniswap, CoW, KyberSwap, Pendle quotes
 ├── cache/                        # Derived Parquet files (regeneratable, gitignored)
 │   ├── markets.parquet           # Market metadata (immutable Morpho Blue parameters)
 │   ├── market_state.parquet      # Time series of (S, B, U) per market per block sample
@@ -139,6 +139,12 @@ in loan or collateral asset units as appropriate.
 
 ### 3.4 `positions.parquet`
 
+> Two producers exist: `scripts/fetch_positions_api.py` serves the LIVE
+> book from the Morpho API (the v1.1 evaluation path, with per-market
+> borrow-share coverage checked against market state), and
+> `scripts/enrich_positions.py` reconstructs historical books by event
+> replay (backtest path).
+
 Reconstructed per-(market, borrower) positions, snapshotted at
 sampled blocks. Built by replaying events.
 
@@ -180,7 +186,7 @@ Calibration data for the slippage curve $\pi(C, V)$.
 | `oracle_price` | float64 | Oracle price at quote time (U.S. dollars) |
 | `realized_price` | float64 | Realised decentralised-exchange execution price (U.S. dollars) |
 | `slippage_bps` | float64 | $(\text{oracle} - \text{realised}) / \text{oracle} \times 10000$, basis points |
-| `source` | string | `1inch_quote`, `uniswap_swap`, or `cowswap_fill` |
+| `source` | string | `uniswap_v3_quoter_v2:<fee>bp`, `cowswap_quote`, `kyberswap_quote`, `pendle_router` |
 
 ---
 
@@ -203,7 +209,7 @@ Each module is a standalone, idempotent Python script under
 | Market-state time series | `scripts/fetch_market_state.py` | RPC `eth_call` on `Morpho.market(id)` |
 | Events | `scripts/fetch_events.py` | Subgraph paginated |
 | Oracle prices | `scripts/fetch_oracle_prices.py` | RPC `latestRoundData` per block sample |
-| Decentralised-exchange slippage (forward) | `scripts/fetch_dex_quotes.py` | 1inch application programming interface |
+| Decentralised-exchange slippage (forward) | `scripts/fetch_uniswap_quotes.py`, `scripts/fetch_agg_quotes.py`, `scripts/pendle_csv_to_slippage.py` | Uniswap V3 quoter; CoW Protocol and KyberSwap keyless quote endpoints; Pendle hosted API |
 | Decentralised-exchange slippage (historical) | `scripts/fetch_uniswap_swaps.py` | Uniswap V3 subgraph |
 | Total Value Locked | `scripts/fetch_tvl.py` | DeFiLlama application programming interface |
 
@@ -361,9 +367,6 @@ subgraph:
   url: "https://api.thegraph.com/subgraphs/name/morpho-org/morpho-blue"
   api_key: "${GRAPH_API_KEY}"
 
-oneinch:
-  api_url: "https://api.1inch.dev/swap/v6.0/1"
-  api_key: "${ONEINCH_API_KEY}"
 
 sampling:
   market_state_period_blocks: 1800     # approximately 6 hours on Ethereum
@@ -389,7 +392,7 @@ Secrets via environment variables only, never committed.
 | `fetch_market_state.py` | 3 hours of development plus 1 hour of compute | Approximately 5,000 RPC calls per market over 12 months at 6-hour cadence |
 | `fetch_events.py` | 2 hours of development plus 30 minutes of compute | Subgraph paginated, approximately 10,000 to 30,000 events per market |
 | `fetch_oracle_prices.py` | 2 hours of development plus 2 hours of compute | Approximately 9,000 RPC calls per market |
-| `fetch_dex_quotes.py` | 2 hours of development | 1inch free tier rate-limited; approximately 500 quotes |
+| `fetch_uniswap_quotes.py` + `fetch_agg_quotes.py` | keyless venues; no registration required (the 1inch path was abandoned: mandatory registration) |
 | `fetch_uniswap_swaps.py` | 1 hour of development plus 30 minutes of compute | Subgraph |
 | `fetch_tvl.py` | 30 minutes | DeFiLlama free |
 | Validation suite | 2 hours |, |

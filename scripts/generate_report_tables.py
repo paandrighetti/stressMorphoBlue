@@ -43,8 +43,14 @@ def _pct(x: float, digits: int = 1) -> str:
 @click.option("--results", default="docs/evaluation_results.csv")
 @click.option("--summary", default="docs/evaluation_summary.json")
 @click.option("--outdir", default="docs/_generated")
-def main(results: str, summary: str, outdir: str) -> None:
+@click.option("--snapshot-date", default=None,
+              help="human-readable snapshot date; defaults to today (UTC)")
+def main(results: str, summary: str, outdir: str, snapshot_date: str | None) -> None:
     df = pd.read_csv(results).sort_values("alpha_star")
+    from datetime import date
+    snap_date = snapshot_date or date.today().isoformat()
+    snap_block = int(df["block"].max())
+    snap_line = f"**Snapshot**: {snap_date}, state block {snap_block:,}. "
     sm = json.loads(Path(summary).read_text())
     out = Path(outdir)
     out.mkdir(parents=True, exist_ok=True)
@@ -58,6 +64,7 @@ def main(results: str, summary: str, outdir: str) -> None:
 
     tier_txt = ", ".join(f"{tiers.get(k, 0)} {k}" for k in ("red", "yellow", "green"))
     head = (
+        snap_line +
         f"**{n} of 26 monitored markets evaluated** (engine v1.1; exclusions documented below). "
         f"Survival frontier alpha\\*: median {_pct(a_med)}, minimum {_pct(a_min)}. "
         f"Tiers on alpha\\*: {tier_txt}. Under the extreme scenario, "
@@ -105,6 +112,7 @@ def main(results: str, summary: str, outdir: str) -> None:
     (out / "report_results.md").write_text(report, encoding="utf-8")
 
     readme = (
+        snap_line +
         f"**Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: {n} of 26 monitored markets "
         f"evaluated. Survival frontier alpha\\* (max absorbable 24h outflow): median {_pct(a_med)}, "
         f"minimum {_pct(a_min)}; tiers {tier_txt}. Extreme scenario: {illiq}/{n} fail on liquidity, "
@@ -116,7 +124,7 @@ def main(results: str, summary: str, outdir: str) -> None:
     worst = df.iloc[0]
     best = df.iloc[-1]
     mirror = (
-        f"Across {n} evaluated markets, the survival frontier, the largest 24-hour outflow a market "
+        f"As of {snap_date} (state block {snap_block:,}), across {n} evaluated markets, the survival frontier, the largest 24-hour outflow a market "
         f"absorbs from instantaneous liquidity plus stress-liquidatable recoveries, ranges from "
         f"{_pct(sm['alpha_star_min'])} ({worst.market}) to {_pct(best.alpha_star)} ({best.market}), "
         f"median {_pct(a_med)}. The binding variable is utilisation, not collateral class.\n\n"

@@ -1,3 +1,5 @@
+> **Note (v1.1)**: sections describing the forward Scenario A/B construction and asset-class drawdown floors are superseded by REPORT.md sections 4.2 and 4bis; backtest mechanics remain normative. See docs/MODEL_CORRECTIONS.md.
+
 # Stress Scenarios: Formal Specification
 
 > Version: 0.2. Last updated: May 2026
@@ -368,7 +370,7 @@ existed identically in April 2026, would have suffered.
 | $\beta$ (S2) | Subgraph `Borrow` events | Empirical 99th-percentile quantile over rolling 24 hours | Same minimum sample |
 | $\Delta$ (S3, S4) | Oracle price feed | Empirical 99th-percentile negative log-return over $\Delta t$ | Per collateral; cross-checked against centralised-exchange price |
 | $\lambda$ (S3) | On-chain oracle configuration | Read directly from contract | Chainlink heartbeat or Time-Weighted Average Price window |
-| $\pi(C, V)$ | Decentralised-exchange trades and 1inch quotes | Fit power law $\pi(V) = a \cdot V^b$ via ordinary least squares regression in log-space; fallback to lookup | Validate fit per asset |
+| $\pi(C, V)$ | Decentralised-exchange trades and keyless aggregator quotes (CoW Protocol, KyberSwap) | Fit power law $\pi(V) = a \cdot V^b$ via ordinary least squares regression in log-space; fallback to lookup | Validate fit per asset |
 | KelpDAO path (S5) | On-chain data, 19 April through 22 April 2026 | Direct extraction, no fitting | Anchor event |
 
 ### 4.2 Statistical caveat (important)
@@ -507,7 +509,7 @@ which.
 | Metric | Type | Format | Threshold |
 |---|---|---|---|
 | $\mathrm{LCR_{oc}}$ | float | percentage | green $\geq 150\%$ / yellow $\in [100\%, 150\%)$ / red $< 100\%$ |
-| Time-to-illiquid | int | blocks (or null) | green $\geq 7$d / yellow $\in [24\text{h}, 7\text{d})$ / red $< 24$h |
+| Time-to-illiquid | int | blocks (or null) | green $\geq 7\text{d}$ / yellow $\in [24\text{h}, 7\text{d})$ / red $< 24\text{h}$ |
 | Expected bad debt | float | U.S. dollars (point mode: scalar; Monte Carlo: distribution) | green 0 / yellow $< 1\%$ Total Value Locked / red $\geq 1\%$ |
 | Slippage shortfall | float | U.S. dollars | reported, no threshold |
 | Cascade depth | int | count | reported, no threshold |

@@ -359,3 +359,17 @@ A stress scenario is a quadruple $(\delta, T, h, \rho)$:
 - Chiu, J., Ozdenoren, E., Yuan, K., Zhang, S. (2023), *On the inherent fragility of decentralised-finance lending*, Bank for International Settlements Working Paper 1062.
 - Gudgeon, L., Werner, S. M., Perez, D., Knottenbelt, W. J. (2020), *Decentralised-finance protocols for loanable funds*, Financial Cryptography 2020.
 - Morpho Labs, *Morpho Blue Whitepaper* and *Morpho Blue Yellow Paper*.
+
+**Survival frontier (alpha\*)**: stressed liquid stock divided by total
+supply; the largest 24-hour outflow fraction a market absorbs from
+instantaneous liquidity plus stress-liquidatable recoveries under keeper
+executability. The v1.1 panorama's primary tiering metric.
+
+**LSR-24 (24-hour Liquidity Survival Ratio)**: LCR-inspired coverage
+ratio at a given outflow alpha (BCBS 238 itself defines a 30-day
+horizon). Related by alpha\* = LSR-24 x alpha.
+
+**Latent insolvency**: debt not covered by collateral on stressed oracle
+terms (the Morpho.sol exhaustion condition), computed analytically and
+therefore independent of whether any keeper executes; the solvency leg
+of the extreme test.

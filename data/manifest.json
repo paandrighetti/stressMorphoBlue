@@ -1182,6 +1182,28 @@
         "warnings": [],
         "errors": []
       }
+    },
+    {
+      "run_id": "2026-07-19T10-46-55Z",
+      "run_ts": "2026-07-19T10:16:31.563190+00:00",
+      "config_hash": "agg_quotes",
+      "block_range_min": 0,
+      "block_range_max": 0,
+      "markets": [],
+      "files": {
+        "dex_slippage.parquet": {
+          "path": "data/cache/dex_slippage.parquet",
+          "schema": "dex_slippage",
+          "rows": 663,
+          "bytes": 17553,
+          "sha256": "cd975dc01f845649c3a548ff73b3b3eda004a1b025d8c0a1db1917cd2b5d3948"
+        }
+      },
+      "validation": {
+        "all_passed": true,
+        "warnings": [],
+        "errors": []
+      }
     }
   ]
 }

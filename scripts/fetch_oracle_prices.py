@@ -1,4 +1,4 @@
-"""scripts/fetch_oracle_prices.py — fetch oracle prices per market over time.
+"""scripts/fetch_oracle_prices.py: fetch oracle prices per market over time.
 
 Uses the canonical Morpho Blue IOracle interface:
 
@@ -12,13 +12,13 @@ MorphoChainlinkOracleV2, Pyth via MorphoPythOracle, Redstone wrappers,
 custom oracles).
 
 Output:
-    data/cache/oracle_prices.parquet — schema='oracle_prices'
+    data/cache/oracle_prices.parquet: schema='oracle_prices'
 
 Normalisation:
     The raw `price()` output is converted to "USD per collateral unit"
     when the loan asset is a USD-pegged stable (USDC, USDT, DAI, PYUSD,
     USDS, FRAX). For non-stable loan assets (WETH, WBTC), the value is
-    "loan asset units per collateral unit" — caller must apply a separate
+    "loan asset units per collateral unit": caller must apply a separate
     loan-asset-to-USD conversion if USD denomination is needed.
 
 Reference:

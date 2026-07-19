@@ -49,7 +49,7 @@ source .venv/bin/activate          # macOS / Linux
 .venv\Scripts\Activate.ps1        # Windows (PowerShell)
 
 # 1. Discover top-N markets and patch config.local.yaml
-python scripts/select_markets.py --top 10 --in-place
+python scripts/select_markets.py --top 10 --in-place   # WARNING: REPLACES the curated roster in config; do not run to refresh an existing study
 
 # 2. Fetch market metadata (RPC). ~1-5 min for 10 markets.
 python scripts/fetch_markets.py
@@ -107,3 +107,14 @@ PYTHONPATH=src pytest tests/data/ -v
 
 If any Parquet write fails the schema check, the script exits non-zero
 and writes nothing. Type drift will not silently corrupt the cache.
+
+## v1.1 evaluation chain (after the fetch steps above)
+
+```
+python scripts/fetch_positions_api.py     # live position book via the Morpho API
+python scripts/fetch_agg_quotes.py        # keyless exotic-collateral depth (CoW, KyberSwap)
+python scripts/pendle_csv_to_slippage.py  # merge Pendle-router curves for PT collateral
+python scripts/run_evaluation.py          # 26-market evaluation -> docs/evaluation_results.csv
+python scripts/generate_report_tables.py  # -> docs/_generated/*.md
+python scripts/assemble_docs.py           # splices the figures into README, REPORT, MIRROR
+```

@@ -1,4 +1,4 @@
-"""scripts/fetch_markets.py — fetch Morpho Blue market metadata.
+"""scripts/fetch_markets.py: fetch Morpho Blue market metadata.
 
 Reads market ids from `config.markets`, queries the Morpho Blue contract via
 remote-procedure-call to retrieve the interest rate model address, oracle
@@ -6,7 +6,7 @@ address, liquidation loan-to-value threshold, and asset addresses, then
 enriches with ERC-20 metadata (symbol, decimals).
 
 Output:
-    data/cache/markets.parquet  — schema='markets'
+    data/cache/markets.parquet : schema='markets'
 
 Usage:
     python scripts/fetch_markets.py --config config.local.yaml
@@ -62,8 +62,8 @@ def _fetch_one_market(
         1. `idToMarketParams(id)` → (loan, collateral, oracle, irm, lltv)
         2. ERC20.symbol() and decimals() on loan asset (2 calls)
         3. ERC20.symbol() and decimals() on collateral asset (2 calls)
-        4. detect_oracle_type — 1 call (Chainlink probe)
-        5. CreateMarket event scan — best-effort, may fall back to block 0
+        4. detect_oracle_type: 1 call (Chainlink probe)
+        5. CreateMarket event scan: best-effort, may fall back to block 0
 
     For idle markets (collateral == 0x0), returns sensible defaults for the
     collateral fields.
@@ -160,7 +160,7 @@ def main(config_path: str, output_path: str) -> None:
 
     if not cfg.markets:
         raise click.ClickException(
-            "config.markets is empty — run scripts/select_markets.py first "
+            "config.markets is empty: run scripts/select_markets.py first "
             "to populate the list of market ids to fetch."
         )
 

@@ -46,18 +46,6 @@ class SubgraphConfig(BaseModel):
         return None if expanded.startswith("${") else expanded
 
 
-class OneInchConfig(BaseModel):
-    api_url: HttpUrl
-    api_key: str | None = None
-
-    @field_validator("api_key")
-    @classmethod
-    def expand_env(cls, v: str | None) -> str | None:
-        if v is None:
-            return None
-        expanded = os.path.expandvars(v)
-        return None if expanded.startswith("${") else expanded
-
 
 class SamplingConfig(BaseModel):
     market_state_period_blocks: int = Field(gt=0)
@@ -80,7 +68,6 @@ class Config(BaseModel):
     network: NetworkConfig
     morpho_blue: MorphoBlueConfig
     subgraph: SubgraphConfig
-    oneinch: OneInchConfig | None = None
     sampling: SamplingConfig
     range: RangeConfig
     markets: list[str] = Field(default_factory=list)
