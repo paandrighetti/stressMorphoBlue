@@ -1,6 +1,4 @@
-> **DRAFT. Regenerate every figure and table with the v1.1 engine before publishing (docs/MODEL_CORRECTIONS.md).**
-
-## Why this matters
+﻿## Why this matters
 
 Decentralised-finance lending protocols hold tens of billions of dollars of deposits, and their fragility under stress is theoretically established (Chiu, Ozdenoren, Yuan & Zhang, BIS Working Paper 1062, 2023). Yet most public risk reports for these protocols transpose Basel concepts informally, without explicit pass-or-fail criteria, and without a reproducible backtest against historical events.
 
@@ -46,7 +44,7 @@ These minima override the empirical 99th-percentile when the observed history is
 
 ## Methodology in one paragraph
 
-For each market we run two stress scenarios in parallel rather than cumulating both stresses in one path. **Scenario A** combines a class-floored 99th-percentile drawdown with a moderate outflow alpha. **Scenario B** combines a typical drawdown with an amplified outflow alpha (20% to 30%, calibrated on KelpDAO and the USDC depeg). The reported LCR is the worst of the two; the bad-debt distribution comes from a Monte Carlo over the empirical drawdown distribution. Position-level loan-to-values are sampled from a Beta distribution with mean 0.65 × LLTV, capturing the right-skewed observation that most borrowers are moderately leveraged with an aggressive minority near the liquidation threshold.
+For each market we run two stress scenarios in parallel rather than cumulating both stresses in one path. **Scenario A** combines a class-floored 99th-percentile drawdown with a moderate outflow alpha. **Scenario B** combines a typical drawdown with an amplified outflow alpha (20% to 30%, calibrated on KelpDAO and the USDC depeg). The reported LCR is the worst of the two; the bad-debt distribution comes from a Monte Carlo over the empirical drawdown distribution. Position-level loan-to-values are sampled from a Beta distribution with mean 0.65 Ã— LLTV, capturing the right-skewed observation that most borrowers are moderately leveraged with an aggressive minority near the liquidation threshold.
 
 ---
 
@@ -86,7 +84,7 @@ The finding is reproducible end-to-end: `python scripts/fetch_metamorpho_vaults.
 We treat known failures as data:
 
 - **3 corner cases require investigation.** stcUSD/USDT passes the extreme test with zero liquidations, possibly because the synthetic price feed is yield-adjusted and partially insulated from the drawdown injection. LBTC/PYUSD passes with three liquidations and zero bad debt, clean closure rather than insolvency. msY/USDC passes nominal-strong but fails extreme, likely small-sample variance in the position distribution.
-- **Position-level reconstruction is approximate.** We use a parametric Beta with mean 0.65 × LLTV. A production deployment should reconstruct actual position-level LTVs from collateral and borrow events.
+- **Position-level reconstruction is approximate.** We use a parametric Beta with mean 0.65 Ã— LLTV. A production deployment should reconstruct actual position-level LTVs from collateral and borrow events.
 - **Maximal-extractable-value and liquidator-competition effects are not modelled.** Liquidations are atomic at modelled DEX prices; in reality, gas-price competition can leave some liquidations unprofitable.
 - **The continuous LCR criterion returns Pr(LCR < 1) = 0% across all 26 markets.** This is plausibly a positive signal: under BCBS-aligned stress with healthy overcollateralisation, no Morpho Blue market we analysed approaches the LCR threshold of 1. But it could also signal that the LCR criterion as parameterised is insufficiently sensitive to extreme tail risks; the extreme stress test is the discriminating signal.
 

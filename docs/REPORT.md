@@ -1,6 +1,4 @@
-> **DRAFT. Tables below were generated with the v1.0 engine; regenerate with v1.1 (docs/MODEL_CORRECTIONS.md) before publication.**
-
-# A Liquidity Stress Framework for Morpho Blue, Adapted from Basel III
+﻿# A Liquidity Stress Framework for Morpho Blue, Adapted from Basel III
 
 > **Summary**. We build a liquidity stress framework for Morpho Blue
 > isolated lending markets, adapting the Liquidity Coverage Ratio
@@ -82,7 +80,7 @@ This work formalises the transposition. We build:
 - An on-chain analogue of the Liquidity Coverage Ratio (the regulatory
   ratio defined in BCBS 238, 2013, which requires regulated banks to
   hold sufficient liquid assets to cover stressed outflows over 30
-  days; see §2.1 below);
+  days; see Â§2.1 below);
 - A Monte Carlo simulation framework over an empirical distribution of
   collateral price drawdowns;
 - A falsifiable validation procedure with three pre-specified
@@ -150,7 +148,7 @@ For a Morpho Blue lending market, our adaptation is as follows. Let:
 - $\pi(V) = a \cdot V^b$ denote the slippage of a sale of $V$
   collateral-asset units on a decentralised exchange, expressed as a
   fraction of the oracle price; the parameters $a > 0$ and $b \in (0,1)$
-  are fitted from data per the Almgren, Chriss model (see §2.4).
+  are fitted from data per the Almgren, Chriss model (see Â§2.4).
 
 The **on-chain Level 1 component** is the available liquidity:
 $L_1 = L$.
@@ -181,7 +179,7 @@ This formulation **differs from a literal Basel haircut transposition**
 on a critical point: the Basel haircut applies to a notional asset
 value, while our Level 2A is bounded above by the per-position debt.
 This avoids the over-counting of pledged collateral that we observed
-in earlier versions of this work (see §3 of [`SCENARIOS.md`](./SCENARIOS.md)
+in earlier versions of this work (see Â§3 of [`SCENARIOS.md`](./SCENARIOS.md)
 for the full discussion).
 
 The **on-chain numerator** is then
@@ -193,7 +191,7 @@ total supply withdrawn during the 24-hour stress window:
 
 $$\mathrm{Outflows_{oc}}(\alpha) = \alpha \cdot S - \min\left(L_{2A,\mathrm{net}}, 0.75 \cdot \alpha S\right).$$
 
-The cap at 75% of outflows reproduces BCBS 238 Annex 4 §170, which
+The cap at 75% of outflows reproduces BCBS 238 Annex 4 Â§170, which
 limits the offset between secured-lending inflows and outflows.
 
 The **outflow fraction $\alpha$ is event-calibrated** from the
@@ -255,7 +253,7 @@ recovery from collateral), yet drain quickly under concentrated whale
 exit (high time-to-illiquid risk). Conversely, a market may have slow
 withdrawal velocity yet be vulnerable to a price shock (high
 bad-debt-probability risk). The three criteria are designed to be
-*non-redundant*: empirically (see §3.2 below) we find that different
+*non-redundant*: empirically (see Â§3.2 below) we find that different
 events trigger different criteria, and the combination is required for
 adequate coverage.
 
@@ -375,7 +373,7 @@ scenario, not the worst conceivable hybrid).
 calibrated on a normal price path (no event injected), reflecting
 moderate runoff coherent with the price drop. Class minima for the
 99th-percentile drawdown are calibrated against historical events
-(see [`METHODOLOGY.md`](./METHODOLOGY.md) §3 for the full table):
+(see [`METHODOLOGY.md`](./METHODOLOGY.md) Â§3 for the full table):
 
 - Stablecoin synthetics: 5% (USDC depeg 2023 trough was 8%)
 - Liquid staking tokens: 8% (stETH discount 2022 reached 8%)
