@@ -138,27 +138,20 @@ For a Morpho Blue lending market, our adaptation is as follows. Let:
 The **on-chain Level 1 component** is the available liquidity:
 $L_1 = L$.
 
-The **on-chain Level 2A component** corresponds to the loan-asset
-value the protocol can recover via liquidation under stress. The
-liquidator seizes collateral up to a *liquidation incentive factor*
-$\phi(\Lambda)$ above the debt amount (Morpho Blue's formula:
-$\phi(\Lambda) = \min(1.15, 1/(0.3\Lambda + 0.7))$, capping the bonus
-at 15%) and sells it on the decentralised exchange at the realised
-price $P \cdot (1 - \pi(\cdot))$. The recovery for the supplier pool
-from position $i$ is
+The **on-chain Level 2A component** corresponds to loan-asset
+repayment that the supplier pool can actually receive through executable
+liquidations. For a liquidatable position $i$, the protocol determines a debt
+repayment $q_i$ and collateral seizure under Morpho Blue's liquidation rules.
+The supplier pool receives $q_i$, capped by the position debt $b_i$:
 
-$$r_i = \min\left(c_i \cdot P \cdot (1 - \pi(c_i)), b_i \cdot \phi(\Lambda)\right) - \mathrm{BD}_i$$
+$$r_i = q_i, \qquad 0 \le q_i \le b_i.$$
 
-where the cap at $b_i \cdot \phi(\Lambda)$ reflects that the
-protocol does not benefit from over-collateralisation (any surplus
-returns to the borrower) and where the **bad debt** for position $i$
-is
-
-$$\mathrm{BD}_i = \max\left(0, b_i - c_i \cdot P \cdot (1 - \pi(c_i))\right),$$
-
-i.e., the unrecoverable shortfall when realised proceeds fall below
-the position's debt. The aggregate Level 2A is then
-$L_{2A,\mathrm{net}} = \sum_i r_i$.
+The seized collateral is sold by the keeper, not by the supplier pool. The
+DEX execution value therefore gates keeper profitability and execution; it is
+not booked directly as pool recovery. If a batch is not executable at the
+measured aggregate slippage, its realised recovery is zero. Realised bad debt
+and keeper-independent latent insolvency are reported separately. The aggregate
+Level 2A component is $L_{2A,\mathrm{net}} = \sum_i r_i$.
 
 This formulation **differs from a literal Basel haircut transposition**
 on a critical point: the Basel haircut applies to a notional asset
@@ -216,7 +209,7 @@ channels:
 |---|---|---|
 | Survival frontier $\alpha^*$ | largest 24-hour outflow fraction absorbed from instantaneous liquidity plus stress-liquidatable recoveries under keeper executability, with the oracle re-marked at the window-worst print | primary; carries the tiers (section 4.3) |
 | Time-to-illiquid | first hour at which instantaneous liquidity is exhausted at the window-calibrated outflow $\alpha$ | companion marker |
-| Solvency, two readings | realized bad debt from the contract-faithful Monte Carlo (keeper-gated), and latent insolvency: debt not covered by collateral on stressed oracle terms, keeper-independent | companion; under keeper strikes, latent insolvency is the number to read |
+| Solvency, two readings | realized bad debt from the contract-aligned Monte Carlo (keeper-gated), and latent insolvency: debt not covered by collateral on stressed oracle terms, keeper-independent | companion; under keeper strikes, latent insolvency is the number to read |
 
 The empirical outflow $\alpha$ of each market's own window is reported
 as a stress marker, not a verdict: its calibration is discontinuous at
@@ -351,7 +344,7 @@ retired (section 4quater documents why). The v1.1 base evaluation:
   majors, keyless aggregator quotes rebased on the smallest executed
   size for yield-bearing and exotic collateral; per-snapshot venue
   coverage is whatever the quote cache holds at evaluation time;
-- **runs contract-faithful liquidation** in the Monte Carlo:
+- **runs contract-aligned liquidation** in the Monte Carlo:
   `Morpho.sol` exhaustion semantics, oracle-terms seizure, and keeper
   executability at the aggregate slippage of the eligible batch.
 

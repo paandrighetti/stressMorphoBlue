@@ -159,42 +159,43 @@ The mapping from Basel definitions to Morpho Blue analogues is:
 ### 2.2 Per-position liquidation recovery (the on-chain Level 2A)
 
 A literal application of a Basel Level 2A haircut to total collateral
-notional value (i.e. $L_{\text{2A}} = 0.85 \cdot C \cdot P$ where $C$
-is total collateral and $P$ the oracle price) **over-estimates the
-recoverable assets**, because collateral is pledged and only
-liquidatable through the protocol's liquidation procedure. The
-recovery from a single position $i$ is:
+notional value over-estimates recoverable liquidity. Collateral is pledged
+and becomes monetisable only when a position is liquidatable and a keeper is
+willing to execute the liquidation.
 
-1. The liquidator seizes collateral up to the *liquidation incentive
-  factor* $\phi(\Lambda)$ above debt:
-  $\mathrm{seized}_i = \min\left(b_i \cdot \phi(\Lambda) / P, c_i\right)$
-2. The liquidator sells the seized collateral on a decentralised
-  exchange at the realised price $P \cdot (1 - \pi(\mathrm{seized}_i))$;
-3. The supplier pool receives loan-asset proceeds, capped at the
-  position's debt $b_i$ (any surplus accrues to the borrower);
-4. If proceeds fall below the debt, the shortfall is *bad debt*,
-  borne by the supplier pool.
+For a liquidatable position $i$, Morpho Blue determines the debt repaid and
+the collateral seized under the protocol liquidation rules. The supplier
+pool's realised recovery is the loan asset repaid by the liquidator, capped
+by the position debt. Decentralised-exchange proceeds do **not** flow directly
+to the supplier pool: they determine whether the keeper can profitably execute
+the liquidation.
 
-Formally, the recovery from position $i$ is
+Let $q_i$ be the debt amount repaid by the liquidator. The realised recovery is
 
-$$r_i = \min\left(\mathrm{seized}_i \cdot P \cdot (1 - \pi(\mathrm{seized}_i)), b_i\right) - \mathrm{BD}_i$$
+$$r_i = q_i, \qquad 0 \le q_i \le b_i.$$
 
-where the bad debt for position $i$ is
+Keeper executability is checked by comparing the value of seized collateral
+after aggregate slippage with the repayment and liquidation incentive. If the
+trade is not executable, the realised recovery is zero for that attempted
+batch. The model therefore reports two separate solvency readings:
 
-$$\mathrm{BD}_i = \max\left(0, b_i - \mathrm{seized}_i \cdot P \cdot (1 - \pi(\mathrm{seized}_i))\right).$$
+- **realised bad debt**, produced by the protocol-aligned liquidation engine;
+- **latent insolvency**, the stressed debt not covered by collateral on oracle
+  terms, computed independently of keeper behaviour.
 
-The aggregate Level 2A is
+The aggregate on-chain Level 2A component is
 
-$$L_{2A,\mathrm{net}}(M, t, \sigma) = \sum_i r_i.$$
+$$L_{2A,\mathrm{net}}(M,t,\sigma) = \sum_i r_i.$$
 
-The **liquidation incentive factor** $\phi$ is given by Morpho Blue's
-formula
+The liquidation incentive factor $\phi$ follows Morpho Blue's formula
 
 $$\phi(\Lambda) = \min\left(1.15, \frac{1}{0.3 \cdot \Lambda + 0.7}\right),$$
+rac{1}{0.3 \cdot \Lambda + 0.7}
+ight),$$
 
-capping the bonus at 15% above debt for low values of $\Lambda$. For
-$\Lambda = 0.86$ (typical for major asset, stablecoin pairs), $\phi$
-is approximately $1.043$.
+with the bonus capped at 15%. The implementation details and corrections from
+the superseded v0.3 recovery equation are catalogued in
+`docs/MODEL_CORRECTIONS.md`.
 
 ### 2.3 Honest critique of the adaptation
 
@@ -334,7 +335,7 @@ For each (market, scenario, horizon) tuple:
   exhausted under the scenario;
 - *Expected bad debt*: sum of unrecovered debt at end of horizon;
 - *Slippage-adjusted shortfall*: gap between oracle-priced collateral
-  and decentralised-exchange-realised recovery;
+  and keeper-executable protocol repayment;
 - *Withdrawal survival curve*: empirical $S(t \mid \sigma)$ for the
   secondary hypothesis.
 

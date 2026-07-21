@@ -188,7 +188,7 @@ structural view there.
 
 The trade-off is that we do not capture the dynamic effects (MEV,
 liquidator competition, oracle feedback) that agent-based simulations
-capture. For a comprehensive risk assessment, our framework should be
+capture. For a complete risk assessment, our framework should be
 combined with incumbent agent-based work, not replace it.
 
 ---

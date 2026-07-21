@@ -1,31 +1,27 @@
-"""Live 26-market evaluation driver (v1.1 engine).
+"""Live 26-market evaluation driver for the v1.1 framework.
 
-Applies the three backtest criteria of `backtest/runner.py` to every market
-in `data/cache/`, at the latest sampled block, plus the extreme stress test
-used by the report:
+For every market available in ``data/cache/`` at the latest sampled block, the
+driver computes the current report metrics:
 
-    1. LSR-24 (LCR-inspired 24h survival ratio, `lcr_onchain_v03`) at the
-       worst oracle price observed in the fetched window, with the
-       event-calibrated outflow alpha. Bands: red < 0.80, yellow < 1.00.
-    2. time_to_illiquid under S1 at the calibrated alpha.
-       Bands: red < 12h, yellow < 24h.
-    3. P[bad debt > 0] by Monte Carlo over the empirical 24h-drawdown
-       distribution of the market's own oracle path (S3, instant shape,
-       seed 42). Bands: red > 20%, yellow > 5%.
+1. ``alpha_star``: the largest 24-hour outflow fraction absorbed by available
+   liquidity plus keeper-executable liquidation recoveries after re-marking the
+   position book at the window-worst oracle price. Tiers: red below 10%, yellow
+   below 30%, green at or above 30%.
+2. ``time_to_illiquid`` at the market's drawdown-derived outflow proxy. This is
+   a companion metric and does not determine the tier.
+3. Two solvency readings: realised bad debt from the contract-aligned Monte
+   Carlo engine and keeper-independent latent insolvency on stressed oracle
+   terms.
 
-    Extreme test: LSR-24 at latest_price x (1 - drawdown_x) with alpha_x,
-    plus a deterministic S3 at drawdown_x; FAIL if LSR < 1 or the
-    99th-percentile-style deterministic bad debt exceeds 10% of supply.
-    Defaults: drawdown_x = 25%, alpha_x = 35% (historical 99.5% band).
+The extreme test combines a class-aware collateral shock with a 35% outflow.
+Liquidity and solvency failures are reported separately; latent insolvency is
+not treated as realised protocol bad debt.
 
-Inputs (produced by the scripts/ pipeline):
-    data/cache/markets.parquet, market_state.parquet, oracle_prices.parquet,
-    dex_slippage.parquet, positions.parquet (built by enrich_positions.py).
-
-Outputs:
-    docs/evaluation_results.csv  (one row per market, all metrics)
-    docs/evaluation_summary.json (tier counts, TVL shares, exclusions)
-    stdout table sorted by supply, descending.
+Inputs are produced by the scripts pipeline and include market state, oracle
+prices, measured exit-depth curves and the reconstructed on-chain position book.
+Outputs are ``docs/evaluation_results.csv`` and
+``docs/evaluation_summary.json``. This script does not regenerate publication
+prose; the assembled documentation is handled by the dedicated report scripts.
 """
 
 from __future__ import annotations
@@ -60,9 +56,6 @@ from morpho_stress.scenarios import (
 from morpho_stress.scenarios.liquidation import liquidation_incentive_factor
 from morpho_stress.scenarios.state import MarketParams, MarketState, Position
 
-import datetime as _dt
-import re as _re
-
 log = logging.getLogger("run_evaluation")
 
 # Exclusion-reason helpers: matured principal tokens exit via par redemption
@@ -76,6 +69,8 @@ _PERMISSIONED_NOTES = {
 
 
 def _pt_maturity(symbol: str):
+    import datetime as _dt
+    import re as _re
     m = _re.search(r"-(\d{2})([A-Z]{3})(\d{4})$", symbol or "")
     if not m or m.group(2) not in _MONTHS:
         return None
@@ -84,6 +79,7 @@ def _pt_maturity(symbol: str):
 
 
 def _no_curve_reason(symbol: str, fit_note: str) -> str:
+    import datetime as _dt
     if symbol in _PERMISSIONED_NOTES:
         return _PERMISSIONED_NOTES[symbol]
     mat = _pt_maturity(symbol)

@@ -1,5 +1,3 @@
-> **DRAFT. Pre-flight: fetch aggregator depth for exotic collateral (`python scripts/fetch_agg_quotes.py --source kyberswap`, raise `--pause-s` on 429) or accept the reduced evaluated set; then re-run `run_evaluation.py`, `generate_report_tables.py --snapshot-date <state date>`, `assemble_docs.py`; verify the injected figures; delete this banner.**
-
 ## Why this matters
 
 Decentralised-finance lending protocols hold tens of billions of dollars of deposits, and their fragility under stress is theoretically established (Chiu, Ozdenoren, Yuan & Zhang, BIS Working Paper 1062, 2023). Yet most public risk reports for these protocols transpose Basel concepts informally, without explicit pass-or-fail criteria, and without a reproducible backtest against historical events.
@@ -16,7 +14,7 @@ For each market, on its **actual onchain position book**, three criteria in the 
 
 1. **Survival frontier (alpha\*)**, the primary metric: the largest 24-hour outflow fraction the market absorbs from instantaneous liquidity plus stress-liquidatable recoveries, with the oracle re-marked at the window-worst price and keeper executability enforced. Tiers anchor to the framework's documented calibration band: red below 10%, yellow below 30%, green at or above 30%.
 2. **Time-to-illiquid**: hours before instant liquidity is exhausted at the window-calibrated outflow rate.
-3. **Solvency, two readings**: realized bad debt through the contract-faithful engine (structurally near zero under keeper strikes), and latent insolvency, debt not covered by collateral on stressed oracle terms, computed analytically and independent of keeper behaviour.
+3. **Solvency, two readings**: realized bad debt through the contract-aligned engine (structurally near zero under keeper strikes), and latent insolvency, debt not covered by collateral on stressed oracle terms, computed analytically and independent of keeper behaviour.
 
 The v1.0 four-tier scheme is retired; the empirical outflow alpha of each market's own window is reported as a stress marker, not as the verdict.
 
