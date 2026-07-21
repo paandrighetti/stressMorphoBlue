@@ -1,9 +1,9 @@
-> **Note (v1.1)**: the forward-looking calibration tables in this document (asset-class drawdown floors, Scenario A/B) are superseded by REPORT.md section 4.2; the alpha construction and backtest calibration remain normative. See docs/MODEL_CORRECTIONS.md.
+> **Document status.** This is the historical v0.3 design note and retains the theoretical foundations and calibration rationale used during development. The normative v1.1 public specification is [`REPORT.md`](./REPORT.md), read together with [`MODEL_CORRECTIONS.md`](./MODEL_CORRECTIONS.md) and the implementation. The forward-looking asset-class tables, Scenario A/B architecture, Top-five scope and Beta-scaled position model below are retained only to document the framework's evolution and are superseded for current results.
 
 # Methodology: Liquidity Stress Testing Framework for Morpho Blue
 
-> Version: 0.3. Last updated: May 2026
-> Status: Phase 0 deliverable. methodological note (revised through Phase 5)
+> Version: 0.3 historical design note. Last updated: July 2026
+> Status: retained methodological record; not the normative v1.1 result specification
 > Companion: [`SCENARIOS.md`](./SCENARIOS.md). stress-scenario specifications;
 > [`GLOSSARY.md`](./GLOSSARY.md). definitions of all specialised terms.
 > Author: PA
@@ -69,11 +69,11 @@ where:
   document;
 - $\|\cdot\|_2$ denotes the Euclidean norm.
 
-To our knowledge, $\Delta$ is the first quantitative measure of curator
-risk discipline in decentralised-finance literature. Existing risk
-reports (from Gauntlet, Block Analitica, ChaosLabs and others) publish
-absolute risk reports on individual markets but do not explicitly
-compute curator counterfactuals.
+$\Delta$ is a proposed quantitative measure of curator risk discipline. In
+the public materials reviewed for this project, incumbent risk reports focus
+primarily on individual-market or vault risk and do not publish the same
+curator counterfactual. This observation is scoped to the reviewed materials,
+not a claim of exhaustive literature priority.
 
 ### 1.3 Why this matters
 
@@ -89,11 +89,11 @@ compute curator counterfactuals.
   LlamaRisk transpose Basel concepts informally. We provide an
   **explicit Basel III mapping** with stated limitations.
 
-- **Timing**: The KelpDAO event of April 2026 generated approximately
-  196 million U.S. dollars in bad debt on Aave and approximately 8 billion U.S. dollars of
-  capital migration to Morpho. This is the largest stress event of
-  the present cycle and provides a calibration anchor that did not
-  exist before.
+- **Timing**: The KelpDAO event of April 2026 generated substantial bad debt
+  on Aave and was followed by a material migration of capital toward Morpho.
+  It provides a recent calibration anchor. Exact loss and flow estimates depend
+  on the measurement perimeter and should be cited from the underlying event
+  sources when used outside this methodological note.
 
 ---
 
@@ -190,8 +190,6 @@ $$L_{2A,\mathrm{net}}(M,t,\sigma) = \sum_i r_i.$$
 The liquidation incentive factor $\phi$ follows Morpho Blue's formula
 
 $$\phi(\Lambda) = \min\left(1.15, \frac{1}{0.3 \cdot \Lambda + 0.7}\right),$$
-rac{1}{0.3 \cdot \Lambda + 0.7}
-ight),$$
 
 with the bonus capped at 15%. The implementation details and corrections from
 the superseded v0.3 recovery equation are catalogued in
@@ -265,10 +263,9 @@ The interesting analysis is the **conditional Net Stable Funding
 Ratio**: how much funding is *empirically* stable, given oracle
 health, prevailing yield differential versus alternatives, and
 supplier concentration? This reduces to estimating a
-*withdrawal-survival function* $S(t \mid \text{features})$, which we
-model via Kaplan, Meier-style empirical cumulative distributions on
-historical supplier behaviour. This is **the academic contribution of
-the project** beyond the descriptive stress-test layer.
+*withdrawal-survival function* $S(t \mid \text{features})$, which could be modelled with Kaplan-Meier-style empirical survival curves on
+historical supplier behaviour. This remains a proposed extension beyond the
+current v1.1 publication rather than a validated output of the present engine.
 
 ---
 
@@ -276,22 +273,25 @@ the project** beyond the descriptive stress-test layer.
 
 ### 3.1 Markets
 
-Top-five Morpho Blue lending markets by Total Value Locked on the
-Ethereum mainnet at the start of the data-acquisition phase, frozen
-on day one of that phase (see
-[`scripts/select_markets.py`](../scripts/select_markets.py) once
-implemented).
+Historical v0.3 design scope: the five largest Morpho Blue lending markets by
+Total Value Locked on Ethereum mainnet at the start of data acquisition. The
+v1.1 publication supersedes this scope: it monitors 26 markets and reports
+results for the 24 markets that passed the published data-quality gates. The
+current selector is implemented in
+[`scripts/select_markets.py`](../scripts/select_markets.py).
 
-**Candidate set (subject to revalidation at run time)**:
+**Historical candidate set (not the current v1.1 market universe)**:
 - wstETH/USDC (collateral: wrapped staked Ether; loan asset: USDC)
 - wstETH/WETH (collateral: wrapped staked Ether; loan asset: wrapped Ether)
 - WBTC/USDC (collateral: wrapped Bitcoin; loan asset: USDC)
 - cbBTC/USDC (collateral: Coinbase-wrapped Bitcoin; loan asset: USDC)
 - sUSDe/USDC (collateral: staked Ethena USD; loan asset: USDC)
 
-Selection criteria, in order: (i) Total Value Locked greater than
-100 million U.S. dollars, (ii) market age greater than 6 months, (iii) at least
-one stress event observable in the historical window.
+Historical selection criteria, in order: (i) Total Value Locked greater
+than 100 million U.S. dollars, (ii) market age greater than 6 months, and
+(iii) at least one stress event observable in the historical window. The
+current v1.1 selector and data-quality gates are documented in `REPORT.md` and
+implemented in `scripts/select_markets.py`.
 
 ### 3.2 Historical window
 
@@ -301,8 +301,9 @@ Twelve rolling months: May 2025 through May 2026. This window contains:
   Locked (April 2026), used as the **primary calibration anchor**;
 - A series of oracle deviations and minor depegs (continuous, low
   intensity);
-- Sector-wide macro stress around the third quarter of 2025 (to
-  verify at data-acquisition time).
+- A prospective third-quarter 2025 macro-stress placeholder was included in
+  the v0.3 design. It was not used as a calibration anchor in the v1.1 public
+  results and is retained here only as part of the historical specification.
 
 ### 3.3 Stress horizons
 
@@ -312,9 +313,13 @@ Three values of $h$, reported in parallel:
 - **7 days**, short-horizon stress;
 - **30 days**, Basel-equivalent horizon.
 
-### 3.4 Stress scenarios (four plus one)
+### 3.4 Historical stress-scenario design (four plus one)
 
-Five scenarios, fully specified in [`SCENARIOS.md`](./SCENARIOS.md).
+> **Superseded for current results.** This section records the v0.3 scenario
+> architecture. The current v1.1 evaluation is specified in `REPORT.md` and
+> `MODEL_CORRECTIONS.md`.
+
+Five scenarios were specified in [`SCENARIOS.md`](./SCENARIOS.md).
 Summary:
 
 | Identifier | Scenario | Description | Severity calibration |
@@ -341,7 +346,11 @@ For each (market, scenario, horizon) tuple:
 
 ---
 
-## 4. Limitations (explicit and exhaustive)
+## 4. Historical v0.3 limitations
+
+The current v1.1 limitations are stated in `REPORT.md`. The items below are
+retained to document the baseline design and should not be read as an
+exhaustive list for the current engine.
 
 1. **Endogeneity ignored at baseline**: prices, withdrawals, and
   liquidations are treated as separable processes. In reality,

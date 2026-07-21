@@ -64,7 +64,7 @@ The work is calibrated on the KelpDAO collateral exploit of April
 morpho-blue-liquidity-stress/
 ├── docs/
 │   ├── GLOSSARY.md          # Definitions of all specialised terms
-│   ├── METHODOLOGY.md       # Core methodological note
+│   ├── METHODOLOGY.md       # Historical v0.3 design note and retained foundations
 │   ├── SCENARIOS.md         # Stress-scenario specification
 │   ├── DATA.md              # Data architecture
 │   ├── BACKTEST.md          # Backtest specification
@@ -96,7 +96,7 @@ morpho-blue-liquidity-stress/
 
 | Phase | Deliverable | Status |
 |---|---|---|
-| **0** | Methodological note (`docs/METHODOLOGY.md`) | Done, version 0.3 |
+| **0** | Historical design note (`docs/METHODOLOGY.md`) | Retained as version 0.3; superseded sections are flagged |
 | **1** | Stress-scenario formalisation (`docs/SCENARIOS.md`) | Done, version 0.2 |
 | **2** | Data-acquisition architecture (`docs/DATA.md`), storage layer, tests, and live fetchers | Done, pipeline operational on 26 markets |
 | **3** | Modelling: AdaptiveCurveIRM, slippage curve, S1 (withdrawal run), liquidation engine | Done |
@@ -138,16 +138,17 @@ cp config.yaml config.local.yaml  # then edit to add secrets via environment var
 
 ---
 
-## How to read this repository (for reviewers and prospective employers)
+## How to read this repository
 
 If you have **5 minutes**: read [`docs/REPORT.md`](./docs/REPORT.md)
 sections 1, 4, and 5. That is the framework's headline finding, the
 forward-looking ranking, and the explicit limitations.
 
 If you have **30 minutes**: read [`docs/REPORT.md`](./docs/REPORT.md)
-end-to-end, then skim the bibliography in
-[`docs/references.md`](./docs/references.md) and the glossary in
-[`docs/GLOSSARY.md`](./docs/GLOSSARY.md) to assess academic grounding.
+end-to-end, then review [`docs/MODEL_CORRECTIONS.md`](./docs/MODEL_CORRECTIONS.md)
+for the normative changes from the historical v0.3 design. Use
+[`docs/references.md`](./docs/references.md) and
+[`docs/GLOSSARY.md`](./docs/GLOSSARY.md) for sources and terminology.
 
 If you have **2 hours**: clone the repository, run the test suite,
 and reproduce the Phase-5 demonstration. Inspect the current v1.1
@@ -163,9 +164,9 @@ changes from the superseded v0.3 framework.
 | Reference | Approach | Our positioning |
 |---|---|---|
 | Gauntlet, ChaosLabs | Agent-based simulation of liquidations | We use deterministic stress shocks at empirical quantiles plus a Monte Carlo layer; explicitly acknowledged simpler than agent-based; targeted as a future extension. |
-| LlamaRisk, Block Analitica | Descriptive risk reports per market | We provide an explicit Basel-III mapping and a falsifiable hypothesis structure that they do not. |
+| LlamaRisk, Block Analitica | Descriptive risk reports per market | We provide an explicit Basel-III mapping and falsifiable hypothesis structure not stated in the same form in the public materials reviewed for this project. |
 | Chiu, Ozdenoren, Yuan, Zhang (BIS Working Paper 1062, 2023) | Theoretical model of decentralised-finance run dynamics | We are empirical and applied; their model justifies our framework's relevance, but our work is implementation-oriented. |
-| Steakhouse Financial | Vault-curator-centric reporting | Our secondary hypothesis explicitly targets curator risk discipline as a quantifiable gap, a question they engage with operationally but do not formalise. |
+| Steakhouse Financial | Vault-curator-centric reporting | Our archived secondary hypothesis treats curator risk discipline as a quantitative research question; this positioning is limited to the public materials reviewed for this project. |
 
 ---
 
