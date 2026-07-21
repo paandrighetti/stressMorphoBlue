@@ -60,6 +60,9 @@ from morpho_stress.scenarios import (
 from morpho_stress.scenarios.liquidation import liquidation_incentive_factor
 from morpho_stress.scenarios.state import MarketParams, MarketState, Position
 
+import datetime as _dt
+import re as _re
+
 log = logging.getLogger("run_evaluation")
 
 # Exclusion-reason helpers: matured principal tokens exit via par redemption
@@ -73,8 +76,6 @@ _PERMISSIONED_NOTES = {
 
 
 def _pt_maturity(symbol: str):
-    import datetime as _dt
-    import re as _re
     m = _re.search(r"-(\d{2})([A-Z]{3})(\d{4})$", symbol or "")
     if not m or m.group(2) not in _MONTHS:
         return None
@@ -83,7 +84,6 @@ def _pt_maturity(symbol: str):
 
 
 def _no_curve_reason(symbol: str, fit_note: str) -> str:
-    import datetime as _dt
     if symbol in _PERMISSIONED_NOTES:
         return _PERMISSIONED_NOTES[symbol]
     mat = _pt_maturity(symbol)
