@@ -1,4 +1,6 @@
-﻿## Why this matters
+> **DRAFT. Pre-flight: fetch aggregator depth for exotic collateral (`python scripts/fetch_agg_quotes.py --source kyberswap`, raise `--pause-s` on 429) or accept the reduced evaluated set; then re-run `run_evaluation.py`, `generate_report_tables.py --snapshot-date <state date>`, `assemble_docs.py`; verify the injected figures; delete this banner.**
+
+## Why this matters
 
 Decentralised-finance lending protocols hold tens of billions of dollars of deposits, and their fragility under stress is theoretically established (Chiu, Ozdenoren, Yuan & Zhang, BIS Working Paper 1062, 2023). Yet most public risk reports for these protocols transpose Basel concepts informally, without explicit pass-or-fail criteria, and without a reproducible backtest against historical events.
 
@@ -10,13 +12,13 @@ The full source code, test suite, and reproducible event fixtures are open-sourc
 
 ## What we measure
 
-For each market, three pass-or-fail criteria, all sourced from the spirit of BCBS 238:
+For each market, on its **actual onchain position book**, three criteria in the spirit of BCBS 238:
 
-1. **Continuous liquidity coverage**: probability that the liquid stock falls below stressed outflows under a 24-hour scenario, denoted Pr(LSR-24 < 1). The metric is LCR-inspired; BCBS 238 itself defines a 30-day horizon.
-2. **Time-to-illiquid**: hours before instant liquidity is exhausted under a calibrated outflow rate.
-3. **Bad-debt magnitude**: 99th-percentile bad debt expressed as a fraction of Total Value Locked.
+1. **Survival frontier (alpha\*)**, the primary metric: the largest 24-hour outflow fraction the market absorbs from instantaneous liquidity plus stress-liquidatable recoveries, with the oracle re-marked at the window-worst price and keeper executability enforced. Tiers anchor to the framework's documented calibration band: red below 10%, yellow below 30%, green at or above 30%.
+2. **Time-to-illiquid**: hours before instant liquidity is exhausted at the window-calibrated outflow rate.
+3. **Solvency, two readings**: realized bad debt through the contract-faithful engine (structurally near zero under keeper strikes), and latent insolvency, debt not covered by collateral on stressed oracle terms, computed analytically and independent of keeper behaviour.
 
-A market is `red` when any single component reaches red severity; `yellow` for stress-band conditions; `green-watch` for sound-but-monitor; `green-strong` for fully robust.
+The v1.0 four-tier scheme is retired; the empirical outflow alpha of each market's own window is reported as a stress marker, not as the verdict.
 
 ---
 
@@ -30,21 +32,13 @@ The framework is anchored on three historical stress events:
 
 Two events PASS the framework's pre-event detection criteria. The third (stETH 2022) FAILs honestly: the framework is a 24-hour survival test (LSR-24) and the stETH episode was a multi-day repricing rather than an acute liquidity stress. We report this failure rather than retrofitting parameters to make it pass.
 
-**Class-floored drawdowns** for forward-looking stress, calibrated per asset class against the events above:
-
-- Stablecoin synthetics: 5%
-- Liquid staking tokens: 8%
-- Wrapped Bitcoin variants: 10%
-- Pendle principal tokens: 15%
-- Wrapped Ether: 8%
-
-These minima override the empirical 99th-percentile when the observed history is shorter than the structural risk of the asset class.
+**Base stress is each market's own recent window** (v1.1): the worst 24-hour oracle print re-marks the state, and the outflow alpha derives from the market's empirical drawdown distribution (with a documented discontinuity at the 5% large-holder trigger, which is precisely why the survival frontier, not alpha, is the verdict). Class-aware floors survive only in the **extreme test**: 25% drawdown for volatile collateral, capped at three times the window-worst move (floored at 5%) for redemption-arbitraged pairs, with a 35% outflow anchored on the KelpDAO and USDC-depeg episodes.
 
 ---
 
 ## Methodology in one paragraph
 
-For each market we run two stress scenarios in parallel rather than cumulating both stresses in one path. **Scenario A** combines a class-floored 99th-percentile drawdown with a moderate outflow alpha. **Scenario B** combines a typical drawdown with an amplified outflow alpha (20% to 30%, calibrated on KelpDAO and the USDC depeg). The reported LCR is the worst of the two; the bad-debt distribution comes from a Monte Carlo over the empirical drawdown distribution. Position-level loan-to-values are sampled from a Beta distribution with mean 0.65 Ã— LLTV, capturing the right-skewed observation that most borrowers are moderately leveraged with an aggressive minority near the liquidation threshold.
+We fetch the live position book from the Morpho API (per-market borrow-share coverage checked against onchain state), fit exit-depth curves from quoted liquidity (Uniswap V3 quoter for majors; keyless CoW Protocol and KyberSwap quotes, rebased on the smallest executed size, for yield-bearing collateral; Pendle-router curves for principal tokens), re-mark each market at its window-worst oracle print, and ask one question: how large a 24-hour outflow does the market absorb, counting only instantaneous liquidity and recoveries from positions that actually become liquidatable, executable by a rational keeper at the aggregate slippage? A Monte Carlo over the market's own drawdown distribution adds the solvency leg, split into realized bad debt (Morpho.sol exhaustion semantics) and latent insolvency (keeper-independent). An extreme scenario with class-aware shocks and 35% outflows closes the loop with a two-leg pass-or-fail.
 
 ---
 
@@ -58,45 +52,35 @@ The second axis is the mirror image: under a class-aware extreme scenario, 20 of
 Versus v1.0: the earlier yellow/green tiering was an artefact of a structural double-count (recoveries in both numerator and netted outflows, correction C6) compounded by non-callable healthy debt counted as monetisable (C4). The v1.1 engine removes both and reports what remains: a liquidity question that rate-driven replenishment, not modelled in this version, answers in practice.
 <!-- END GENERATED: mirror_findings -->
 
-## Findings, MetaMorpho curator discipline
-
-> *(v1.0 enrichment figures; regenerate or defer to a follow-up before publishing.)*
-
-Beyond the per-market view, we apply the tier classification to score the **discipline of the top 20 MetaMorpho vaults** by Total Value Locked. The score is a TVL-weighted exposure to severity tiers (red=4, yellow=2, green-watch=1, green-strong=0). A score of 0 is fully conservative; 2 is significant yellow exposure; above 2 warrants curator-side review.
-
-The result is a **structural finding** rather than a quality ranking: **the four largest USDC-asset vaults converge at a score of approximately 2.0**, reflecting near-exclusive allocation to mainstream BTC/ETH-collateral markets that the framework classifies as yellow.
-
-| Vault | TVL ($M) | Score | yellow% allocation |
-|---|---|---|---|
-| Gauntlet USDC Prime | 150.9 | 2.00 | 100% |
-| Steakhouse USDC | 129.4 | 1.94 | 96.8% |
-| Vault Bridge USDC | 48.9 | 2.00 | 100% |
-| Hakutora USDC | 16.4 | 2.00 | 100% |
-
-This is not curator imprudence: it is that **the USDC vault product structurally concentrates the protocol's material tail risk** in a small number of mainstream markets where the bulk of DeFi USDC yield originates. The risk is not idiosyncratic to any one curator. By contrast, RLUSD-asset and PYUSD-asset vaults (Sentora) achieve scores below 1.0 by diversifying across green-strong synthetic-stablecoin markets.
-
-The finding is reproducible end-to-end: `python scripts/fetch_metamorpho_vaults.py --top 20`.
+Curator-level analysis of MetaMorpho vault allocations, scoring how vault deposits distribute across the tiers above, follows in a separate post.
 
 ---
 
 ## Honest limitations
 
-We treat known failures as data:
+We treat known limits as data:
 
-- **3 corner cases require investigation.** stcUSD/USDT passes the extreme test with zero liquidations, possibly because the synthetic price feed is yield-adjusted and partially insulated from the drawdown injection. LBTC/PYUSD passes with three liquidations and zero bad debt, clean closure rather than insolvency. msY/USDC passes nominal-strong but fails extreme, likely small-sample variance in the position distribution.
-- **Position-level reconstruction is approximate.** We use a parametric Beta with mean 0.65 Ã— LLTV. A production deployment should reconstruct actual position-level LTVs from collateral and borrow events.
-- **Maximal-extractable-value and liquidator-competition effects are not modelled.** Liquidations are atomic at modelled DEX prices; in reality, gas-price competition can leave some liquidations unprofitable.
-- **The continuous LCR criterion returns Pr(LCR < 1) = 0% across all 26 markets.** This is plausibly a positive signal: under BCBS-aligned stress with healthy overcollateralisation, no Morpho Blue market we analysed approaches the LCR threshold of 1. But it could also signal that the LCR criterion as parameterised is insufficiently sensitive to extreme tail risks; the extreme stress test is the discriminating signal.
+- **No rate-driven replenishment.** The withdrawal run is mechanical; borrowers repaying into a spiking rate curve, the main real-world stabiliser, is not modelled. Survival frontiers are lower bounds in that respect.
+- **Keeper strike is all-or-none.** If the aggregate resale of the eligible batch is unprofitable at the aggregate slippage, no liquidation executes. Realized bad debt near zero under stress is a regime, not a comfort; latent insolvency is the number to read.
+- **The alpha calibration is discontinuous** at its 5% large-holder trigger (two otherwise similar markets can carry very different markers); the survival frontier is the discontinuity-free verdict.
+- **Aggregator depth is conservative for instantly-redeemable wrappers** (arbitrageurs can mint and redeem at net asset value); for cooldown wrappers such as sUSDe, the measured curve is the 24-hour exit.
+- **Single snapshot, Ethereum mainnet only, oracle integrity assumed.** Oracle manipulation is a distinct attack surface, not covered here.
+- **Backtest fixtures are partly synthetic reconstructions** (recorded aggregates, synthetic splits), documented as such; the forward panorama, by contrast, evaluates the actual book.
 
 ---
 
 ## Reproducibility
 
 ```bash
-git clone https://github.com/YungBandulf/stressMorphoBlue
+git clone https://github.com/paandrighetti/stressMorphoBlue
 cd stressMorphoBlue && uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
-PYTHONPATH=src pytest tests/        # 145 tests, ~2 minutes
+PYTHONPATH=src pytest tests/        # 146 tests, ~2 minutes
+
+# figures chain (from cached data to the tables in this article)
+python scripts/run_evaluation.py
+python scripts/generate_report_tables.py
+python scripts/assemble_docs.py
 PYTHONPATH=src python scripts/enrich_forward_looking.py --evaluate --extreme
 ```
 
@@ -113,4 +97,4 @@ The contribution is methodological: a reproducible, falsifiable risk framework g
 
 ---
 
-*Source: github.com/YungBandulf/stressMorphoBlue*
+*Source: github.com/paandrighetti/stressMorphoBlue*

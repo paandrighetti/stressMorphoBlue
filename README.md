@@ -1,7 +1,7 @@
 # Morpho Blue: Liquidity Stress Testing Framework
 
 > A liquidity stress testing framework for Morpho Blue isolated
-> lending markets and MetaMorpho vaults, adapted from Basel III
+> lending markets, adapted from Basel III
 > regulatory standards (specifically the Liquidity Coverage Ratio of
 > document BCBS 238, 2013).
 
@@ -39,11 +39,11 @@ immutable parameters. It contributes:
    Supervision in document BCBS 238, 2013), with stated mapping
    limitations;
 
-2. A **MetaMorpho vault curator discipline score**, the TVL-weighted
-   exposure of each vault to the framework's severity tiers (red /
-   yellow / green-watch / green-strong). The lower the score, the
-   more conservative the vault. Implementation in
-   `scripts/fetch_metamorpho_vaults.py`.
+2. A **survival-frontier tier** per market ($\alpha^*$: red below 10%,
+   yellow below 30%, green at or above 30% of supply absorbable in 24
+   hours), with time-to-illiquid and the two solvency readings as
+   companions. A v1.0 MetaMorpho vault curator score is archived
+   pending regeneration (`docs/archive/metamorpho_v1.0.md`).
 
 3. A **decoupled stress scenario architecture** that separates price
    stress (BCBS 238 24h LCR with class-floored drawdowns) from
@@ -85,7 +85,7 @@ morpho-blue-liquidity-stress/
 │   ├── fetch_tvl.py                 # Aggregate TVL
 │   ├── enrich_positions.py          # Reconstruct positions from events
 │   ├── enrich_forward_looking.py    # Build profiles + run evaluation
-│   ├── fetch_metamorpho_vaults.py   # MetaMorpho vault curator discipline
+│   ├── fetch_metamorpho_vaults.py   # MetaMorpho vaults (v1.0, archived analysis)
 │   └── diagnose_corner_cases.py     # Investigate edge-case markets
 ├── tests/                   # pytest suite (146 tests)
 └── README.md
@@ -180,7 +180,7 @@ event-calibrated outflow fraction.
 
 If this framework informs your research or analysis, please cite:
 
-> Pierre-Antoine Andrighetti. (2026). *Morpho Blue: a Basel III liquidity stress testing framework for isolated lending markets and MetaMorpho vaults.* https://github.com/paandrighetti/stressMorphoBlue
+> Pierre-Antoine Andrighetti. (2026). *Morpho Blue: a Basel III liquidity stress testing framework for isolated lending markets.* https://github.com/paandrighetti/stressMorphoBlue
 
 ---
 
