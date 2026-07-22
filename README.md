@@ -88,7 +88,7 @@ morpho-blue-liquidity-stress/
 │   ├── enrich_forward_looking.py    # Build profiles + run evaluation
 │   ├── fetch_metamorpho_vaults.py   # MetaMorpho vaults (v1.0, archived analysis)
 │   └── diagnose_corner_cases.py     # Investigate edge-case markets
-├── tests/                   # pytest suite (146 tests)
+├── tests/                   # pytest suite
 └── README.md
 ```
 
@@ -118,7 +118,7 @@ mainnet; evaluated coverage and headline figures are generated from
 `docs/evaluation_results.csv`, never hand-transcribed.
 
 <!-- BEGIN GENERATED: readme_block -->
-**Snapshot**: 2026-07-16, state block 25,545,086. **Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 24 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.7%, minimum 1.0%; tiers 16 red, 7 yellow, 1 green. Extreme scenario: 20/24 fail on liquidity, 0/24 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
+**Snapshot**: 2026-07-16, state block 25,545,086. **Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 24 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.7%, minimum 1.0%; tiers 9 red, 14 yellow, 1 green. Extreme scenario: 20/24 fail on liquidity, 0/24 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
 <!-- END GENERATED: readme_block -->
 
 ## Quick start

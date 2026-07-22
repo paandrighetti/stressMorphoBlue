@@ -1,6 +1,6 @@
 ### Results (engine v1.1)
 
-**Snapshot**: 2026-07-16, state block 25,545,086. **24 of 26 monitored markets evaluated** (engine v1.1; exclusions documented below). Survival frontier alpha\*: median 10.7%, minimum 1.0%. Tiers on alpha\*: 16 red, 7 yellow, 1 green. Under the extreme scenario, **20 of 24 markets fail the liquidity leg while 0 fail the solvency leg**: at target utilisation, 24-hour risk on Morpho Blue is a liability-liquidity question, not an asset-solvency one.
+**Snapshot**: 2026-07-16, state block 25,545,086. **24 of 26 monitored markets evaluated** (engine v1.1; exclusions documented below). Survival frontier alpha\*: median 10.7%, minimum 1.0%. Tiers on alpha\*: 9 red, 14 yellow, 1 green. Under the extreme scenario, **20 of 24 markets fail the liquidity leg while 0 fail the solvency leg**: at target utilisation, 24-hour risk on Morpho Blue is a liability-liquidity question, not an asset-solvency one.
 
 #### Base 24h stress, sorted by survival frontier
 
@@ -15,18 +15,18 @@
 | wsrUSD/USDC | $17.8M | 90% | 5% | **9.8%** | inf | 0% | red |
 | weETH/RLUSD | $67.3M | 90% | 41% | **9.8%** | 5.8h | 0% | red |
 | wstETH/USDC | $30.7M | 90% | 40% | **9.9%** | 5.9h | 0% | red |
-| cbBTC/USDC | $287.6M | 90% | 38% | **10.2%** | 6.4h | 0% | red |
-| WBTC/USDC | $115.8M | 90% | 38% | **10.2%** | 6.4h | 0% | red |
-| LBTC/PYUSD | $46.7M | 89% | 38% | **10.6%** | 6.7h | 0% | red |
-| PT-apyUSD-18JUN2026/USDC | $3.2M | 89% | 46% | **10.8%** | 5.7h | 4% | red |
+| cbBTC/USDC | $287.6M | 90% | 38% | **10.2%** | 6.4h | 0% | yellow |
+| WBTC/USDC | $115.8M | 90% | 38% | **10.2%** | 6.4h | 0% | yellow |
+| LBTC/PYUSD | $46.7M | 89% | 38% | **10.6%** | 6.7h | 0% | yellow |
+| PT-apyUSD-18JUN2026/USDC | $3.2M | 89% | 46% | **10.8%** | 5.7h | 4% | yellow |
 | syrupUSDC/RLUSD | $33.8M | 90% | 5% | **10.8%** | inf | 0% | yellow |
-| wstETH/USDT | $172.7M | 89% | 40% | **10.9%** | 6.5h | 0% | red |
+| wstETH/USDT | $172.7M | 89% | 40% | **10.9%** | 6.5h | 0% | yellow |
 | sUSDe/PYUSD | $40.6M | 89% | 5% | **11.0%** | inf | 0% | yellow |
 | wstETH/WETH | 11,554 WETH | 89% | 5% | **11.2%** | inf | 0% | yellow |
 | wstETH/WETH | 48,995 WETH | 89% | 5% | **11.3%** | inf | 0% | yellow |
 | weETH/WETH | 8,901 WETH | 89% | 5% | **11.4%** | inf | 0% | yellow |
-| WBTC/USDT | $57.1M | 88% | 38% | **11.9%** | 7.5h | 0% | red |
-| PT-apxUSD-18JUN2026/USDC | $212k | 86% | 46% | **13.7%** | 7.2h | 0% | red |
+| WBTC/USDT | $57.1M | 88% | 38% | **11.9%** | 7.5h | 0% | yellow |
+| PT-apxUSD-18JUN2026/USDC | $212k | 86% | 46% | **13.7%** | 7.2h | 0% | yellow |
 | cbBTC/PYUSD | $2.8M | 78% | 7% | **21.8%** | inf | 0% | yellow |
 | sUSDat/AUSD | $8.9M | 75% | 41% | **24.8%** | 14.5h | 0% | yellow |
 | PT-reUSD-25JUN2026/USDC | $640k | 59% | 5% | **41.1%** | inf | 0% | green |
