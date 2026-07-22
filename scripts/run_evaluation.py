@@ -1,31 +1,27 @@
-"""Live 26-market evaluation driver (v1.1 engine).
+"""Live 26-market evaluation driver for the v1.1 framework.
 
-Applies the three backtest criteria of `backtest/runner.py` to every market
-in `data/cache/`, at the latest sampled block, plus the extreme stress test
-used by the report:
+For every market available in ``data/cache/`` at the latest sampled block, the
+driver computes the current report metrics:
 
-    1. LSR-24 (LCR-inspired 24h survival ratio, `lcr_onchain_v03`) at the
-       worst oracle price observed in the fetched window, with the
-       event-calibrated outflow alpha. Bands: red < 0.80, yellow < 1.00.
-    2. time_to_illiquid under S1 at the calibrated alpha.
-       Bands: red < 12h, yellow < 24h.
-    3. P[bad debt > 0] by Monte Carlo over the empirical 24h-drawdown
-       distribution of the market's own oracle path (S3, instant shape,
-       seed 42). Bands: red > 20%, yellow > 5%.
+1. ``alpha_star``: the largest 24-hour outflow fraction absorbed by available
+   liquidity plus keeper-executable liquidation recoveries after re-marking the
+   position book at the window-worst oracle price. Tiers: red below 10%, yellow
+   below 30%, green at or above 30%.
+2. ``time_to_illiquid`` at the market's drawdown-derived outflow proxy. This is
+   a companion metric and does not determine the tier.
+3. Two solvency readings: realised bad debt from the contract-aligned Monte
+   Carlo engine and keeper-independent latent insolvency on stressed oracle
+   terms.
 
-    Extreme test: LSR-24 at latest_price x (1 - drawdown_x) with alpha_x,
-    plus a deterministic S3 at drawdown_x; FAIL if LSR < 1 or the
-    99th-percentile-style deterministic bad debt exceeds 10% of supply.
-    Defaults: drawdown_x = 25%, alpha_x = 35% (historical 99.5% band).
+The extreme test combines a class-aware collateral shock with a 35% outflow.
+Liquidity and solvency failures are reported separately; latent insolvency is
+not treated as realised protocol bad debt.
 
-Inputs (produced by the scripts/ pipeline):
-    data/cache/markets.parquet, market_state.parquet, oracle_prices.parquet,
-    dex_slippage.parquet, positions.parquet (built by enrich_positions.py).
-
-Outputs:
-    docs/evaluation_results.csv  (one row per market, all metrics)
-    docs/evaluation_summary.json (tier counts, TVL shares, exclusions)
-    stdout table sorted by supply, descending.
+Inputs are produced by the scripts pipeline and include market state, oracle
+prices, measured exit-depth curves and the reconstructed on-chain position book.
+Outputs are ``docs/evaluation_results.csv`` and
+``docs/evaluation_summary.json``. This script does not regenerate publication
+prose; the assembled documentation is handled by the dedicated report scripts.
 """
 
 from __future__ import annotations
@@ -61,7 +57,38 @@ from morpho_stress.scenarios.liquidation import liquidation_incentive_factor
 from morpho_stress.scenarios.state import MarketParams, MarketState, Position
 
 log = logging.getLogger("run_evaluation")
+
+# Exclusion-reason helpers: matured principal tokens exit via par redemption
+# (no AMM depth to measure), permissioned wrappers have no public venue.
+_MONTHS = {"JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6,
+           "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12}
+_PERMISSIONED_NOTES = {
+    "AA_FalconXUSDC": "permissioned wrapper; no public exit venue to quote",
+    "mF-ONE": "permissioned RWA wrapper; no public exit venue to quote",
+}
+
+
+def _pt_maturity(symbol: str):
+    import datetime as _dt
+    import re as _re
+    m = _re.search(r"-(\d{2})([A-Z]{3})(\d{4})$", symbol or "")
+    if not m or m.group(2) not in _MONTHS:
+        return None
+    return _dt.datetime(int(m.group(3)), _MONTHS[m.group(2)], int(m.group(1)),
+                        tzinfo=_dt.timezone.utc)
+
+
+def _no_curve_reason(symbol: str, fit_note: str) -> str:
+    import datetime as _dt
+    if symbol in _PERMISSIONED_NOTES:
+        return _PERMISSIONED_NOTES[symbol]
+    mat = _pt_maturity(symbol)
+    if mat is not None and mat < _dt.datetime.now(_dt.timezone.utc):
+        return (f"PT past maturity ({mat.date().isoformat()}): exit is par "
+                f"redemption, AMM depth not applicable")
+    return f"no slippage curve ({fit_note})"
 HOURS_24 = int(24 * 3600 / BLOCK_TIME_SEC)
+DRAWDOWN_WINDOW_OBSERVATIONS = 24
 CACHE = Path("data/cache")
 
 
@@ -88,6 +115,33 @@ def _composite(sevs: list[str]) -> str:
     if "yellow" in sevs:
         return "yellow"
     return "green"
+
+
+def _rolling_drawdowns(
+    prices: np.ndarray,
+    window: int = DRAWDOWN_WINDOW_OBSERVATIONS,
+) -> np.ndarray:
+    """Return valid peak-to-window-min drawdowns, including the final window."""
+    values = np.asarray(prices, dtype=float)
+    if window < 2:
+        raise ValueError("drawdown window must contain at least two observations")
+    if values.ndim != 1:
+        raise ValueError("prices must be a one-dimensional array")
+    if values.size < window:
+        return np.array([], dtype=float)
+
+    observations: list[float] = []
+    for start in range(values.size - window + 1):
+        sample = values[start : start + window]
+        peak = float(sample[0])
+        window_min = float(np.min(sample))
+        if not np.isfinite(peak) or not np.isfinite(window_min):
+            continue
+        if peak <= 0 or window_min <= 0:
+            continue
+        observations.append(max(0.0, (peak - window_min) / peak))
+
+    return np.asarray(observations, dtype=float)
 
 
 def _col(df: pd.DataFrame, *candidates: str) -> str:
@@ -120,11 +174,19 @@ def main() -> None:
                     help="minimum slippage observations per collateral for the power-law fit")
     ap.add_argument("--allow-missing-positions", action="store_true",
                     help="degraded L1-only run for markets without reconstructed positions")
+    ap.add_argument(
+        "--allow-synthetic-drawdowns",
+        action="store_true",
+        help=(
+            "explicitly permit a synthetic drawdown distribution when no valid "
+            "measured 24h windows exist; never use for publication"
+        ),
+    )
     ap.add_argument("--out-csv", default="docs/evaluation_results.csv")
     ap.add_argument("--out-json", default="docs/evaluation_summary.json")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    log.info("run_evaluation v5 (survival frontier alpha*)")
+    log.info("run_evaluation v5.1 (nature-aware exclusion reasons)")
 
     f = _load_caches()
     markets, mstate, oracle, slip = f["markets"], f["market_state"], f["oracle_prices"], f["dex_slippage"]
@@ -160,7 +222,7 @@ def main() -> None:
                 fit_notes[sym] = f"flat fallback (max {bps_max:.1f} bps @ {vol_max:,.0f} native)"
                 log.info("%s: %s", sym, fit_notes[sym])
             else:
-                fit_notes[sym] = f"unusable quotes ({len(usable)}/{len(sub)} positive-bps rows)"
+                fit_notes[sym] = (f"insufficient slippage observations: {len(usable)} usable, "f"{args.min_fit_obs} required")
             continue
         try:
             res = fit_with_diagnostics(slip, sym, min_observations=args.min_fit_obs)
@@ -185,7 +247,7 @@ def main() -> None:
             excluded.append((mid, label, "no oracle price series (oracle interface not supported this window)")); continue
         csym = mk.get("collateral_asset_symbol")
         if csym not in curves:
-            excluded.append((mid, label, f"no slippage curve ({fit_notes.get(csym, 'no quotes')})")); continue
+            excluded.append((mid, label, _no_curve_reason(csym, fit_notes.get(csym, 'no quotes')))); continue
         curve = curves[csym]
 
         snap = st.loc[st[ms_block].idxmax()]
@@ -291,13 +353,21 @@ def main() -> None:
         tti_h = tti * BLOCK_TIME_SEC / 3600 if tti is not None else float("inf")
         sev2 = _severity_tti(tti_h)
 
-        dds = []
-        for i in range(len(prices) - 24):
-            peak = prices[i]
-            if peak <= 0:
-                continue
-            dds.append(max(0.0, (peak - prices[i:i + 24].min()) / peak))
-        dist = EmpiricalDistribution(observations=np.array(dds) if dds else np.array([0.05, 0.10, 0.20, 0.30]))
+        drawdown_observations = _rolling_drawdowns(prices)
+        if drawdown_observations.size:
+            drawdown_source = "measured"
+        elif args.allow_synthetic_drawdowns:
+            drawdown_observations = np.array([0.05, 0.10, 0.20, 0.30], dtype=float)
+            drawdown_source = "synthetic_override"
+            log.warning(
+                "%s: no valid measured 24h drawdowns; using explicit synthetic fallback",
+                label,
+            )
+        else:
+            excluded.append((mid, label, "no valid measured 24h drawdown windows"))
+            continue
+
+        dist = EmpiricalDistribution(observations=drawdown_observations)
         mc = run_monte_carlo(
             initial_state=state,
             distribution=dist,
@@ -334,7 +404,7 @@ def main() -> None:
         # redemption-arbitraged correlated pairs (wstETH/WETH etc.) whose
         # window-worst 24h drawdown is near zero; cap the shock at 3x the
         # worst observed, floored at 5%, for those markets.
-        worst_dd = max(dds) if dds else 0.0
+        worst_dd = float(drawdown_observations.max())
         dd_x = args.extreme_drawdown if worst_dd >= 0.03 else min(
             args.extreme_drawdown, max(0.05, 3.0 * worst_dd)
         )
@@ -369,6 +439,8 @@ def main() -> None:
             "lsr24": lcr, "tti_hours": tti_h, "p_bad_debt": p_bd,
             "p_insolvency": p_insolv, "insolvency_p99_pct": insolv_p99_pct,
             "bad_debt_p99_pct": bd_p99_pct,
+            "drawdown_source": drawdown_source,
+            "drawdown_observations": int(drawdown_observations.size),
             "tier": sev1,
             "severity": sev1,  # backward-compatible publication alias
             "tti_severity": sev2,
@@ -412,7 +484,21 @@ def main() -> None:
         "extreme_illiquidity_failures": int(df["extreme_illiq_fail"].sum()),
         "extreme_insolvency_failures": int(df["extreme_insolv_fail"].sum()),
         "extreme_fail_tvl_share_pct": float(df.loc[df["extreme_fail"], "supply_assets"].sum() / tv * 100) if tv else 0.0,
-        "extreme_params": {"drawdown": args.extreme_drawdown, "alpha": args.extreme_alpha},
+        "extreme_params": {
+            "nominal_drawdown_cap": args.extreme_drawdown,
+            "outflow_alpha": args.extreme_alpha,
+            "correlated_pair_policy": (
+                "when the worst measured 24h drawdown is below 3%, use the "
+                "minimum of the nominal cap and max(5%, 3x measured worst)"
+            ),
+            "per_market_drawdown_column": "extreme_drawdown_used",
+        },
+        "data_quality": {
+            "synthetic_drawdown_markets": df.loc[
+                df["drawdown_source"] != "measured", "market"
+            ].tolist(),
+            "publication_requires_measured_drawdowns": True,
+        },
         "n_paths": args.n_paths,
     }
     Path(args.out_json).write_text(json.dumps(summary, indent=2))

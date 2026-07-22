@@ -1,11 +1,13 @@
 # Morpho Blue: Liquidity Stress Testing Framework
 
+[![tests](https://github.com/paandrighetti/stressMorphoBlue/actions/workflows/tests.yml/badge.svg)](https://github.com/paandrighetti/stressMorphoBlue/actions/workflows/tests.yml)
+
 > A liquidity stress testing framework for Morpho Blue isolated
-> lending markets and MetaMorpho vaults, adapted from Basel III
+> lending markets, adapted from Basel III
 > regulatory standards (specifically the Liquidity Coverage Ratio of
 > document BCBS 238, 2013).
 
-**Status**: v1.1 engine (contract-faithful liquidation accounting, IRM accrual, single-counted LSR-24; corrections catalogued in [docs/MODEL_CORRECTIONS.md](./docs/MODEL_CORRECTIONS.md)). Automated tests run through GitHub Actions. Headline figures are generated from `docs/evaluation_results.csv` by `scripts/generate_report_tables.py` and injected by `scripts/assemble_docs.py`, never hand-transcribed. Not a production risk system. Not investment advice.
+**Status**: v1.1 engine (contract-aligned liquidation accounting, IRM accrual, single-counted LSR-24; corrections catalogued in [docs/MODEL_CORRECTIONS.md](./docs/MODEL_CORRECTIONS.md)). The complete automated test suite is run by GitHub Actions. Headline figures are generated from `docs/evaluation_results.csv` by `scripts/generate_report_tables.py` and injected by `scripts/assemble_docs.py`, never hand-transcribed. Not a production risk system. Not investment advice.
 
 ---
 
@@ -39,19 +41,19 @@ immutable parameters. It contributes:
    Supervision in document BCBS 238, 2013), with stated mapping
    limitations;
 
-2. A **MetaMorpho vault curator discipline score**, the TVL-weighted
-   exposure of each vault to the framework's severity tiers (red /
-   yellow / green-watch / green-strong). The lower the score, the
-   more conservative the vault. Implementation in
-   `scripts/fetch_metamorpho_vaults.py`.
+2. A **survival-frontier tier** per market ($\alpha^*$: red below 10%,
+   yellow below 30%, green at or above 30% of supply absorbable in 24
+   hours), with time-to-illiquid and the two solvency readings as
+   companions. A v1.0 MetaMorpho vault curator score is archived
+   pending regeneration (`docs/archive/metamorpho_v1.0.md`).
 
-3. A **decoupled stress scenario architecture** that separates price
-   stress (BCBS 238 24h LCR with class-floored drawdowns) from
-   liquidity stress (amplified runoff alpha) rather than cumulating
-   both into a single scenario, and an **extreme stress test**
-   (drawdown 25%, alpha 35%) calibrated on the worst observed DeFi
-   stress events to probe protocol behaviour beyond the empirical
-   distribution.
+3. A **joint stressed-state evaluation architecture** that re-marks
+   collateral, applies an empirically anchored outflow proxy, evaluates
+   the actual on-chain position book, and enforces keeper executability
+   against measured exit depth. A separate **class-aware extreme stress test** uses a nominal drawdown
+   of up to 25% and a 35% outflow. For redemption-arbitraged correlated
+   pairs, the collateral shock is capped at three times the worst measured
+   window drawdown, subject to a 5% floor.
 
 The work is calibrated on the KelpDAO collateral exploit of April
 2026 as a primary stress anchor, alongside the USDC depeg of March
@@ -65,7 +67,7 @@ The work is calibrated on the KelpDAO collateral exploit of April
 morpho-blue-liquidity-stress/
 ├── docs/
 │   ├── GLOSSARY.md          # Definitions of all specialised terms
-│   ├── METHODOLOGY.md       # Core methodological note
+│   ├── METHODOLOGY.md       # Historical v0.3 design note and retained foundations
 │   ├── SCENARIOS.md         # Stress-scenario specification
 │   ├── DATA.md              # Data architecture
 │   ├── BACKTEST.md          # Backtest specification
@@ -85,7 +87,7 @@ morpho-blue-liquidity-stress/
 │   ├── fetch_tvl.py                 # Aggregate TVL
 │   ├── enrich_positions.py          # Reconstruct positions from events
 │   ├── enrich_forward_looking.py    # Build profiles + run evaluation
-│   ├── fetch_metamorpho_vaults.py   # MetaMorpho vault curator discipline
+│   ├── fetch_metamorpho_vaults.py   # MetaMorpho vaults (v1.0, archived analysis)
 │   └── diagnose_corner_cases.py     # Investigate edge-case markets
 ├── tests/                   # pytest suite
 └── README.md
@@ -97,16 +99,16 @@ morpho-blue-liquidity-stress/
 
 | Phase | Deliverable | Status |
 |---|---|---|
-| **0** | Methodological note (`docs/METHODOLOGY.md`) | Done, version 0.3 |
+| **0** | Historical design note (`docs/METHODOLOGY.md`) | Retained as version 0.3; superseded sections are flagged |
 | **1** | Stress-scenario formalisation (`docs/SCENARIOS.md`) | Done, version 0.2 |
 | **2** | Data-acquisition architecture (`docs/DATA.md`), storage layer, tests, and live fetchers | Done, pipeline operational on 26 markets |
 | **3** | Modelling: AdaptiveCurveIRM, slippage curve, S1 (withdrawal run), liquidation engine | Done |
 | **3.5** | AdaptiveCurveIRM full-adaptive layer, geometric Time-Weighted Average Price oracle, S3 (oracle deviation), Monte Carlo, property-based tests | Done |
 | **4** | Historical-backtest framework (`docs/BACKTEST.md`) and three event fixtures | Done, three of three events processed |
 | **5** | Version-0.3 framework, decoupled stress scenarios (price-stress and liquidity-stress), continuous LCR criterion, Beta-scaled position distribution, asset-class slippage and drawdown calibration, extreme stress test, forward-looking analysis on 26 live markets (superseded by v1.1; see docs/MODEL_CORRECTIONS.md) | Done |
-| **6** | v1.1: contract-faithful engine (C1-C7), live-position evaluation via the Morpho API, keyless multi-venue depth (Uniswap quoter, CoW Protocol, KyberSwap, Pendle router), survival-frontier panorama, generated-figures publication chain | Done |
-| **6** | Public deliverables (Dune dashboard, Mirror article, public-facing summary) | Done |
-| **7** | Empirical position-level reconstruction (`scripts/enrich_positions.py`), MetaMorpho vault curator discipline score (`scripts/fetch_metamorpho_vaults.py`), corner case diagnostic (`scripts/diagnose_corner_cases.py`), multi-day NSFR-style horizon (`--horizon-days N`), benchmark vs incumbent frameworks (`docs/BENCHMARK.md`) | Done |
+| **6** | v1.1: contract-aligned engine (C1-C7), live-position evaluation via the Morpho API, keyless multi-venue depth (Uniswap quoter, CoW Protocol, KyberSwap, Pendle router), survival-frontier panorama, generated-figures publication chain | Done |
+| **7** | Public deliverables (Dune dashboard, Mirror article, public-facing summary) | Done |
+| **8** | Empirical position-level reconstruction (`scripts/enrich_positions.py`), MetaMorpho vault curator discipline score (`scripts/fetch_metamorpho_vaults.py`), corner case diagnostic (`scripts/diagnose_corner_cases.py`), multi-day NSFR-style horizon (`--horizon-days N`), benchmark vs incumbent frameworks (`docs/BENCHMARK.md`) | Done |
 
 ---
 
@@ -117,7 +119,7 @@ mainnet; evaluated coverage and headline figures are generated from
 `docs/evaluation_results.csv`, never hand-transcribed.
 
 <!-- BEGIN GENERATED: readme_block -->
-**Snapshot**: 2026-07-16, state block 25,545,086. **Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 24 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.7%, minimum 1.0%; tiers 9 red, 14 yellow, 1 green. Extreme scenario: 20/24 fail on liquidity, 0/24 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
+**Snapshot**: 2026-07-16, state block 25,545,086. **Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 24 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.7%, minimum 1.0%; tiers 9 red, 14 yellow, 1 green. Class-aware extreme scenario: 20/24 fail on liquidity, 0/24 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
 <!-- END GENERATED: readme_block -->
 
 ## Quick start
@@ -127,34 +129,36 @@ mainnet; evaluated coverage and headline figures are generated from
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
-# Run the test suite
+# Run the complete automated test suite (runtime depends on the environment)
 PYTHONPATH=src pytest tests/ -v
 
 # Run the Phase-5 end-to-end demonstration
 PYTHONPATH=src python notebooks/phase5_demo.py
 
-# Set up local configuration (for Phase-2 data acquisition, when fetchers are implemented)
+# Set up local configuration for data acquisition
 cp config.yaml config.local.yaml  # then edit to add secrets via environment variables
 ```
 
 ---
 
-## How to read this repository (for reviewers and prospective employers)
+## How to read this repository
 
 If you have **5 minutes**: read [`docs/REPORT.md`](./docs/REPORT.md)
 sections 1, 4, and 5. That is the framework's headline finding, the
 forward-looking ranking, and the explicit limitations.
 
 If you have **30 minutes**: read [`docs/REPORT.md`](./docs/REPORT.md)
-end-to-end, then skim the bibliography in
-[`docs/references.md`](./docs/references.md) and the glossary in
-[`docs/GLOSSARY.md`](./docs/GLOSSARY.md) to assess academic grounding.
+end-to-end, then review [`docs/MODEL_CORRECTIONS.md`](./docs/MODEL_CORRECTIONS.md)
+for the normative changes from the historical v0.3 design. Use
+[`docs/references.md`](./docs/references.md) and
+[`docs/GLOSSARY.md`](./docs/GLOSSARY.md) for sources and terminology.
 
 If you have **2 hours**: clone the repository, run the test suite,
-and reproduce the Phase-5 demonstration. Inspect the v0.3 Liquidity
-Coverage Ratio implementation in
+and reproduce the Phase-5 demonstration. Inspect the current v1.1
+liquidity implementation in
 `src/morpho_stress/backtest/liquidity_metrics.py` and the
-event-calibrated outflow fraction.
+drawdown-derived outflow proxy. Review `docs/MODEL_CORRECTIONS.md` for the
+changes from the superseded v0.3 framework.
 
 ---
 
@@ -163,9 +167,9 @@ event-calibrated outflow fraction.
 | Reference | Approach | Our positioning |
 |---|---|---|
 | Gauntlet, ChaosLabs | Agent-based simulation of liquidations | We use deterministic stress shocks at empirical quantiles plus a Monte Carlo layer; explicitly acknowledged simpler than agent-based; targeted as a future extension. |
-| LlamaRisk, Block Analitica | Descriptive risk reports per market | We provide an explicit Basel-III mapping and a falsifiable hypothesis structure that they do not. |
+| LlamaRisk, Block Analitica | Descriptive risk reports per market | We provide an explicit Basel-III mapping and falsifiable hypothesis structure not stated in the same form in the public materials reviewed for this project. |
 | Chiu, Ozdenoren, Yuan, Zhang (BIS Working Paper 1062, 2023) | Theoretical model of decentralised-finance run dynamics | We are empirical and applied; their model justifies our framework's relevance, but our work is implementation-oriented. |
-| Steakhouse Financial | Vault-curator-centric reporting | Our secondary hypothesis explicitly targets curator risk discipline as a quantifiable gap, a question they engage with operationally but do not formalise. |
+| Steakhouse Financial | Vault-curator-centric reporting | Our archived secondary hypothesis treats curator risk discipline as a quantitative research question; this positioning is limited to the public materials reviewed for this project. |
 
 ---
 
@@ -180,7 +184,7 @@ event-calibrated outflow fraction.
 
 If this framework informs your research or analysis, please cite:
 
-> Pierre-Antoine Andrighetti. (2026). *Morpho Blue: a Basel III liquidity stress testing framework for isolated lending markets and MetaMorpho vaults.* https://github.com/paandrighetti/stressMorphoBlue
+> Pierre-Antoine Andrighetti. (2026). *Morpho Blue: a Basel III liquidity stress testing framework for isolated lending markets.* https://github.com/paandrighetti/stressMorphoBlue
 
 ---
 
