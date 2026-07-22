@@ -1,10 +1,11 @@
-# Model corrections v1.0 -> v1.1 (pre-publication)
+# Model corrections from v1.0 to v1.1
 
-The v1.1 engine applies contract-faithful corrections identified during an
-adversarial review, before any publication of results. Each row states the
-v1.0 behaviour, the bias it introduced, and the v1.1 correction now in the
-code. All headline tables must be regenerated with the v1.1 engine before
-release; do not publish v1.0 figures.
+The published v1.1 engine applies contract-aligned corrections identified during an
+adversarial review. Each row records the v1.0 behaviour, the bias it introduced,
+and the corresponding v1.1 correction now implemented in the code. The committed
+v1.1 headline tables were generated from the corrected engine for the published
+snapshot. Historical v1.0 figures are retained only where explicitly marked as
+archived or superseded.
 
 | # | Component | v1.0 behaviour | Bias of v1.0 | v1.1 correction (applied) |
 |---|-----------|----------------|--------------|---------------------------|
@@ -21,10 +22,13 @@ WAD/Taylor fixed-point; fee-recipient supply shares aggregated; close factor 1
 per position with a batch-level keeper strike instead of a partial-fill search;
 no mempool latency.
 
-## Re-run checklist before publication
+## Historical release checklist
 
+The following release checklist is retained verbatim for methodological provenance.
+Its imperative wording records the original release process and does not represent
+pending publication work.
 1. Re-fetch the market snapshot (26 markets) with the pipeline scripts.
-2. Regenerate REPORT.md tables, README headline block and the Mirror draft
+2. Regenerate REPORT.md tables, README headline block and the Mirror article
    figures with the v1.1 engine.
 3. Update the Dune dashboard queries/numbers where they mirror engine outputs.
 4. Re-check the three historical event fixtures: flags may legitimately change

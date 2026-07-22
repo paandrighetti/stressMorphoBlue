@@ -368,7 +368,12 @@ def main() -> None:
             "alpha_star": alpha_star,
             "lsr24": lcr, "tti_hours": tti_h, "p_bad_debt": p_bd,
             "p_insolvency": p_insolv, "insolvency_p99_pct": insolv_p99_pct,
-            "bad_debt_p99_pct": bd_p99_pct, "severity": _composite([sev1, sev2, sev3]),
+            "bad_debt_p99_pct": bd_p99_pct,
+            "tier": sev1,
+            "severity": sev1,  # backward-compatible publication alias
+            "tti_severity": sev2,
+            "solvency_severity": sev3,
+            "attention_severity": _composite([sev1, sev2, sev3]),
             "extreme_drawdown_used": dd_x,
             "lsr24_extreme": lcr_x, "bad_debt_extreme_realized_pct": bd_x_pct,
             "insolvency_extreme_pct": insolvency_x_pct,
@@ -376,9 +381,10 @@ def main() -> None:
             "extreme_insolv_fail": extreme_insolv_fail,
             "extreme_fail": extreme_fail, "notes": pos_note,
         })
-        log.info("%-28s a*=%.0f%% LSR=%.2f TTI=%s P(bd)=%.0f%% sev=%-6s extreme(dd=%.0f%%)=%s insolv=%.1f%% %s",
+        log.info("%-28s a*=%.0f%% LSR=%.2f TTI=%s P(bd)=%.0f%% tier=%-6s attention=%-6s extreme(dd=%.0f%%)=%s insolv=%.1f%% %s",
                  label, alpha_star * 100, lcr, ("inf" if tti_h == float("inf") else f"{tti_h:.1f}h"),
-                 max(p_bd, p_insolv) * 100, rows[-1]["severity"], dd_x * 100,
+                 max(p_bd, p_insolv) * 100, rows[-1]["tier"],
+                 rows[-1]["attention_severity"], dd_x * 100,
                  "FAIL" if extreme_fail else "pass", insolvency_x_pct, pos_note)
 
     if blocked:
@@ -401,7 +407,7 @@ def main() -> None:
         "alpha_star_min": float(df["alpha_star"].min()),
         "markets_evaluated": int(len(df)),
         "markets_excluded": [{"market_id": m, "market": l, "reason": r} for m, l, r in excluded],
-        "tiers": df["severity"].value_counts().to_dict(),
+        "tiers": df["tier"].value_counts().to_dict(),
         "extreme_failures": int(df["extreme_fail"].sum()),
         "extreme_illiquidity_failures": int(df["extreme_illiq_fail"].sum()),
         "extreme_insolvency_failures": int(df["extreme_insolv_fail"].sum()),
@@ -412,7 +418,8 @@ def main() -> None:
     Path(args.out_json).write_text(json.dumps(summary, indent=2))
 
     print(df[["market", "supply_assets", "alpha", "alpha_star", "lsr24", "tti_hours",
-              "p_insolvency", "insolvency_p99_pct", "severity", "extreme_drawdown_used",
+              "p_insolvency", "insolvency_p99_pct", "tier",
+              "attention_severity", "extreme_drawdown_used",
               "lsr24_extreme", "insolvency_extreme_pct",
               "extreme_illiq_fail", "extreme_insolv_fail"]]
           .to_string(index=False, float_format=lambda x: f"{x:,.2f}"))

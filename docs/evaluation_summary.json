@@ -16,8 +16,8 @@
     }
   ],
   "tiers": {
-    "red": 16,
-    "yellow": 7,
+    "red": 9,
+    "yellow": 14,
     "green": 1
   },
   "extreme_failures": 20,

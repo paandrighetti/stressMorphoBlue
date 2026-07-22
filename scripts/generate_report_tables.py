@@ -47,6 +47,7 @@ def _pct(x: float, digits: int = 1) -> str:
               help="human-readable snapshot date; defaults to today (UTC)")
 def main(results: str, summary: str, outdir: str, snapshot_date: str | None) -> None:
     df = pd.read_csv(results).sort_values("alpha_star")
+    tier_col = "tier" if "tier" in df.columns else "severity"
     from datetime import date
     snap_date = snapshot_date or date.today().isoformat()
     snap_block = int(df["block"].max())
@@ -81,7 +82,7 @@ def main(results: str, summary: str, outdir: str, snapshot_date: str | None) -> 
         base_rows.append(
             f"| {r.market} | {_fmt_supply(r.supply_assets, loan)} | {_pct(r.utilization, 0)} "
             f"| {_pct(r.alpha, 0)} | **{_pct(r.alpha_star)}** | {tti} "
-            f"| {_pct(r.p_insolvency, 0)} | {r.severity} |"
+            f"| {_pct(r.p_insolvency, 0)} | {getattr(r, tier_col)} |"
         )
 
     ext_cols = "| Market | dd applied | LSR (alpha=35%) | Latent insolvency | Illiquidity leg | Solvency leg |\n|---|---|---|---|---|---|\n"
