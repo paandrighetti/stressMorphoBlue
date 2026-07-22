@@ -1,10 +1,10 @@
-# Model corrections v1.0 -> v1.1 (pre-publication)
+# Model corrections v1.0 -> v1.1
 
-The v1.1 engine applies contract-faithful corrections identified during an
-adversarial review, before any publication of results. Each row states the
-v1.0 behaviour, the bias it introduced, and the v1.1 correction now in the
-code. All headline tables must be regenerated with the v1.1 engine before
-release; do not publish v1.0 figures.
+The published v1.1 engine applies contract-aligned corrections identified during an
+adversarial review. Each row states the v1.0 behaviour, the bias it introduced,
+and the v1.1 correction implemented in the code. The current headline tables
+were generated with the v1.1 chain. Superseded v1.0 figures are retained only
+where they are explicitly labelled as historical.
 
 | # | Component | v1.0 behaviour | Bias of v1.0 | v1.1 correction (applied) |
 |---|-----------|----------------|--------------|---------------------------|
@@ -21,16 +21,17 @@ WAD/Taylor fixed-point; fee-recipient supply shares aggregated; close factor 1
 per position with a batch-level keeper strike instead of a partial-fill search;
 no mempool latency.
 
-## Re-run checklist before publication
+## Checklist for a new evaluation snapshot
 
-1. Re-fetch the market snapshot (26 markets) with the pipeline scripts.
-2. Regenerate REPORT.md tables, README headline block and the Mirror draft
-   figures with the v1.1 engine.
-3. Update the Dune dashboard queries/numbers where they mirror engine outputs.
-4. Re-check the three historical event fixtures: flags may legitimately change
-   under C5/C6 (both corrected biases were optimistic); report the v1.1 labels.
-5. Add differential tests against Morpho.sol and AdaptiveCurveIrm.sol
-   behaviour on recorded mainnet transactions (backlog).
+1. Re-fetch the market snapshot with the pipeline scripts and record the state block.
+2. Run the v1.1 evaluation chain and regenerate the report tables and assembled
+   publication surfaces from the resulting CSV/JSON outputs.
+3. Update the Dune dashboard where it mirrors engine outputs.
+4. Re-check the historical event fixtures and document any changed labels.
+5. Review the generated diff before committing it; do not manually transcribe
+   headline values.
+6. Differential tests against `Morpho.sol` and `AdaptiveCurveIrm.sol` on
+   recorded mainnet transactions remain a documented backlog item.
 
 ## Evaluation-chain changes (beyond the engine)
 

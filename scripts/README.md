@@ -78,17 +78,17 @@ produces the same output (modulo the most recent block, which advances
 between runs). Output files are versioned in `data/manifest.json` with
 SHA-256 checksums for reproducibility.
 
-## Rate limits
+## Provider limits and retries
 
-The pipeline is calibrated to free-tier rate limits:
+RPC, indexing and market-data quotas vary by provider, plan and date. Consult
+the current provider documentation and account dashboards before a fresh run;
+do not rely on hard-coded free-tier figures in this repository. Start with a
+small market sample when validating new credentials or endpoints.
 
-- **Alchemy free**: ~100 requests/second sustained, 300M compute units/month.
-  Our pipeline uses < 0.5% of monthly quota for a full run on 10 markets.
-- **The Graph free**: 100K queries/month. Our pipeline uses < 1%.
-- **DeFiLlama**: no documented rate limit; our usage is one request total.
-
-If you hit rate limits, increase the `wait_exponential` parameters in
-`tenacity` decorators within `src/morpho_stress/data/{rpc,subgraph}.py`.
+The data clients use retry and exponential-backoff policies. If a provider
+returns sustained rate-limit errors, reduce concurrency or adjust the retry
+configuration in `src/morpho_stress/data/{rpc,subgraph}.py` rather than assuming
+that a missing response represents missing market data.
 
 ## Validation after fetch
 

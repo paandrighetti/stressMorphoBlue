@@ -78,13 +78,14 @@ The choice of Morpho Blue as the target protocol is motivated by:
   isolated lending markets and immutable parameters. This produces a
   small surface area and a well-defined mathematical state vector for
   each market.
-- **Industry positioning in 2026**: following the KelpDAO collateral
-  exploit of April 2026, approximately 8 billion U.S. dollars of Total
-  Value Locked has migrated from Aave to Morpho (per public on-chain
-  data observed at the time of writing). Risk methodology adapted to
-  Morpho's isolated-market design is in active demand among the
-  protocol's MetaMorpho vault curators, including Steakhouse
-  Financial, Block Analitica, and B.Protocol.
+- **Industry positioning in 2026**: the KelpDAO collateral exploit of
+  April 2026 was followed by unusually large withdrawals from Aave and
+  a broader reallocation of DeFi lending liquidity. Public reporting
+  supports the scale of the Aave outflow, but not a one-for-one claim
+  that the same amount migrated to Morpho. Risk methodology adapted to
+  Morpho's isolated-market design is relevant to MetaMorpho vault
+  curators, including Steakhouse Financial, Block Analitica, and
+  B.Protocol.
 
 This work is methodological. The contribution is a falsifiable,
 reproducible adaptation of regulatory liquidity standards to one

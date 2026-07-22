@@ -4,7 +4,7 @@ Decentralised-finance lending protocols hold tens of billions of dollars of depo
 
 This work formalises the transposition for **Morpho Blue**, the non-custodial lending protocol with isolated markets and immutable parameters. We adapt the **Liquidity Coverage Ratio** defined by the Basel Committee on Banking Supervision in BCBS 238 (2013) and apply it to live on-chain data.
 
-The full source code, test suite, and reproducible event fixtures are open-source. All tests pass; the 26-market evaluation is computed from a live mainnet snapshot. A separate forward-looking module ships as an explicitly synthetic v0 demonstration and feeds none of the figures.
+The full source code, a 146-test suite, and reproducible event fixtures are open-source. The published 26-market selection and 24-market evaluation were computed from the dated mainnet snapshot identified below; current test status is reported by the repository's GitHub Actions workflow. A separate forward-looking module ships as an explicitly synthetic v0 demonstration and feeds none of the figures.
 
 ---
 
@@ -75,10 +75,16 @@ cd stressMorphoBlue && uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 PYTHONPATH=src pytest tests/        # 146 tests, ~2 minutes
 
-# figures chain (from cached data to the tables in this article)
-python scripts/run_evaluation.py
+# regenerate publication tables from the committed evaluation outputs
 python scripts/generate_report_tables.py
 python scripts/assemble_docs.py
+
+# a fresh mainnet evaluation requires configured RPC/API endpoints and a
+# newly acquired or local cache; it is intentionally separate from the
+# committed-output publication rebuild
+python scripts/run_evaluation.py
+
+# optional synthetic forward-looking demonstration (not used in headline figures)
 PYTHONPATH=src python scripts/enrich_forward_looking.py --evaluate --extreme
 ```
 
