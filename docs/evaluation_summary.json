@@ -7,7 +7,7 @@
     {
       "market_id": "0x3274643db77a064abd3bc851de77556a4ad2e2f502f4f0c80845fa8f909ecf0b",
       "market": "sUSDS/USDT",
-      "reason": "no slippage curve (unusable quotes (7/7 positive-bps rows))"
+      "reason": "no slippage curve (insufficient slippage observations: 7 usable, 8 required)"
     },
     {
       "market_id": "0x23a7d0ff682b323363fb8ba58327ed87001f6306e09b7fd7413bbe4698e749c8",
@@ -16,8 +16,8 @@
     }
   ],
   "tiers": {
-    "red": 16,
-    "yellow": 7,
+    "red": 9,
+    "yellow": 14,
     "green": 1
   },
   "extreme_failures": 20,
