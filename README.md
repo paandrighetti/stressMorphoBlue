@@ -50,9 +50,10 @@ immutable parameters. It contributes:
 3. A **joint stressed-state evaluation architecture** that re-marks
    collateral, applies an empirically anchored outflow proxy, evaluates
    the actual on-chain position book, and enforces keeper executability
-   against measured exit depth. A separate **extreme stress test**
-   (drawdown 25%, alpha 35%) probes behaviour beyond the empirical
-   distribution.
+   against measured exit depth. A separate **class-aware extreme stress test** uses a nominal drawdown
+   of up to 25% and a 35% outflow. For redemption-arbitraged correlated
+   pairs, the collateral shock is capped at three times the worst measured
+   window drawdown, subject to a 5% floor.
 
 The work is calibrated on the KelpDAO collateral exploit of April
 2026 as a primary stress anchor, alongside the USDC depeg of March
@@ -118,7 +119,7 @@ mainnet; evaluated coverage and headline figures are generated from
 `docs/evaluation_results.csv`, never hand-transcribed.
 
 <!-- BEGIN GENERATED: readme_block -->
-**Snapshot**: 2026-07-16, state block 25,545,086. **Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 24 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.7%, minimum 1.0%; tiers 9 red, 14 yellow, 1 green. Extreme scenario: 20/24 fail on liquidity, 0/24 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
+**Snapshot**: 2026-07-16, state block 25,545,086. **Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 24 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.7%, minimum 1.0%; tiers 9 red, 14 yellow, 1 green. Class-aware extreme scenario: 20/24 fail on liquidity, 0/24 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
 <!-- END GENERATED: readme_block -->
 
 ## Quick start
