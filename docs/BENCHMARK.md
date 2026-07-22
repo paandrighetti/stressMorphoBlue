@@ -19,11 +19,11 @@ firms are not public and may differ from what is described here.
 | Dimension | Our framework | LlamaRisk | Block Analitica | Gauntlet | ChaosLabs |
 |---|---|---|---|---|---|
 | Regulatory anchor | BCBS 238 (LCR) explicit | Implicit | Implicit | Not stated | Not stated |
-| Stress model | Window-worst re-mark + empirical outflow alpha; class-aware extreme (two legs); multi-day option | Single scenario | Single scenario | Agent-based simulation | Agent-based simulation |
-| Position sampling | Actual onchain book (Morpho API, coverage-checked) | Empirical reconstruction | Empirical reconstruction | Empirical reconstruction | Empirical reconstruction |
+| Stress model | Decoupled scenarios A/B + extreme + multi-day | Single scenario | Single scenario | Agent-based simulation | Agent-based simulation |
+| Position sampling | Beta-scaled OR empirical reconstruction | Empirical reconstruction | Empirical reconstruction | Empirical reconstruction | Empirical reconstruction |
 | Backtest validation | 3 historical events, 2/3 PASS | Not published | Not published | Not published | Not published |
-| Reproducibility | Open source, 146 tests passing | Internal only | Internal only | Internal only | Internal only |
-| Severity tiers | Red / yellow / green on the survival frontier alpha* | Continuous score | Categorical (low/med/high) | Continuous risk-adjusted | Continuous risk-adjusted |
+| Reproducibility | Open source, 145 tests passing | Internal only | Internal only | Internal only | Internal only |
+| Severity tiers | Red / yellow / green-watch / green-strong | Continuous score | Categorical (low/med/high) | Continuous risk-adjusted | Continuous risk-adjusted |
 | Calibration source | Historical events (KelpDAO 2026, USDC 2023, stETH 2022) | Multi-source proprietary | Multi-source proprietary | Agent simulations | Agent simulations |
 
 Three observations from this table:
@@ -37,18 +37,19 @@ explicit BCBS 238 alignment is a contribution to comparability rather
 than a claim of correctness.
 
 **Observation 2.** Agent-based simulation (Gauntlet, ChaosLabs) is more
-sophisticated than our contract-faithful Monte Carlo on the dynamics it can
+sophisticated than our parametric Monte Carlo on the dynamics it can
 capture, in particular maximal-extractable-value, liquidator
 competition, and gas-fee feedback. We acknowledge this in our
 limitations section. Our framework is intentionally simpler to be
 reproducible end-to-end on a developer laptop in under five minutes.
 This is a deliberate scope choice, not a methodological gap.
 
-**Observation 3.** Empirical position data is now standard for all
-incumbents, and since v1.1 it is the only path in this framework as
-well: the v1.0 parametric fallback is retired, and every evaluation
-runs on the actual position book served by the Morpho API, with
-per-market borrow-share coverage checked against onchain state.
+**Observation 3.** Empirical position reconstruction is now standard
+for all incumbents. Our parametric Beta is a fallback; the
+`scripts/enrich_positions.py` deliverable adds empirical reconstruction
+from on-chain Borrow/Repay events. The remaining gap is collateral-event
+processing (SupplyCollateral/WithdrawCollateral), which is a Phase 7
+extension.
 
 ---
 
@@ -61,13 +62,9 @@ analysis window.
 
 ### 2.1 Pendle principal tokens (PT-apyUSD, PT-apxUSD, PT-reUSD)
 
-**Our finding (v1.1).** The roster's three Pendle principal-token
-markets are past maturity at the current snapshot: their exit is par
-redemption, not secondary depth, and the engine excludes them by
-nature with that stated reason. The framework carries a dedicated
-Pendle-router depth path for live principal tokens, and the v1.0
-draft had flagged the then-live PT market red, consistent with the
-incumbents' caution below.
+**Our finding.** PT-apyUSD-18JUN2026/USDC is flagged red under nominal
+stress with 99th-percentile bad debt at 5.7% TVL. All three Pendle PT
+markets fail the extreme stress test.
 
 **LlamaRisk position.** LlamaRisk has published flagging notes on PT
 collateral types since their introduction on Morpho, identifying
@@ -84,16 +81,14 @@ typically below 10% of vault TVL.
 **Convergence.** Three independent sources (LlamaRisk public, Block
 Analitica curation behaviour, our framework) converge on the same
 qualitative finding: PT tokens require explicit risk management. Our
-contribution is the maturity-regime treatment: redemption-at-par
-exclusion for matured principal tokens, and a measured router-depth
-path for live ones.
+contribution is the quantitative magnitude (5.7% TVL bad debt at p99)
+under a stated stress scenario.
 
 ### 2.2 Mainstream BTC/ETH-collateral markets (cbBTC, WBTC, wstETH)
 
-**Our finding (v1.1).** These markets sit in the yellow band of the
-survival frontier (10-30% of supply absorbable in 24 hours) with
-negligible latent insolvency; exact per-market figures are in the
-generated table of REPORT section 4.4.
+**Our finding.** Yellow tier with material absolute exposure: $13.3M
+of cumulative 99th-percentile bad debt across the four markets,
+representing 1.4-2.4% of each market's TVL.
 
 **LlamaRisk position.** Mainstream wrapped BTC and liquid staking
 markets are typically classified in their lowest risk tier in periodic
@@ -105,51 +100,45 @@ exposure heavily to these markets, treating them as the conservative
 core of the Morpho deposit allocations.
 
 **Convergence vs divergence.** Qualitative agreement on the core
-robustness of these markets. Our addition is a quantified survival
-frontier where incumbents report qualitative low risk: a continuous,
-snapshot-stamped measure of how much of the book can exit in 24 hours,
-consistent with the 'low-but-not-zero' regime that LlamaRisk and
-Block Analitica qualitatively describe.
+robustness of these markets. The divergence is that we report a
+non-zero bad debt magnitude where incumbents report low risk
+qualitatively. This is a function of the precision of the metric, not
+a disagreement on the underlying risk: 1.4-2.4% of TVL is consistent
+with the 'low-but-not-zero' regime that LlamaRisk and Block Analitica
+qualitatively describe.
 
 ### 2.3 Liquid staking with high LLTV (wstETH/WETH 96.5%, weETH/WETH 94.5%)
 
-**Our finding (v1.1).** These leverage-tier markets fail the extreme
-test on the liquidity leg (stressed exit depth cannot absorb the
-outflow) while latent insolvency stays contained; the failure mode is
-liability-liquidity, not asset-solvency, which is the panorama's
-central dichotomy.
+**Our finding.** These leverage-tier markets fail the extreme stress
+test (10.52% and 10.29% bad debt of TVL respectively).
 
 **LlamaRisk position.** Recent forum notes flag the risk of high-LLTV
 liquid staking markets specifically when the underlying staking yield
 diverges from the implied yield in the borrow rate.
 
 **Convergence.** Both sources identify high-LLTV LST markets as a
-structural risk pattern. The driver in our analysis (thin stressed
-exit depth against the outflow at high utilisation, with liquidation
-margins compressed under a 25% drawdown) is consistent with the
-LlamaRisk explanation (yield divergence triggers cascading
+structural risk pattern. The driver in our analysis (compressed margin
+between average LTV and LLTV under a 25% drawdown) is consistent with
+the LlamaRisk explanation (yield divergence triggers cascading
 liquidations at compressed margin).
 
 ### 2.4 Synthetic stablecoins (sUSDe, sUSDS, wsrUSD)
 
-**Our finding (v1.1).** On the survival frontier, synthetic-stable
-markets spread across the red and yellow bands at target utilisation;
-none clears the green threshold at the current snapshot. Two exotic
-entries are excluded by nature (msY for an unsupported oracle
-interface, permissioned wrappers for the absence of a public exit
-venue), with the reason stated per market.
+**Our finding.** Mostly green-strong under nominal; sUSDe/PYUSD is
+green-watch. Two exotic synthetic stablecoins (msY, sUSDat) fail
+extreme stress, reported as known limitations due to low cardinality
+of positions.
 
 **LlamaRisk position.** sUSDe and sUSDS are typically classified as
 medium risk in LlamaRisk taxonomies due to their depeg history (USDe
 2024 minor depeg events) and complexity of the underlying yield
 mechanism.
 
-**Convergence (revised in v1.1).** The v1.0 draft classified these
-markets more favourably than LlamaRisk; the v1.1 evaluation on the
-actual book and measured depth moves them into the cautious bands,
-closer to the LlamaRisk stance. The residual difference is horizon
-framing: a 24-hour liability-liquidity view here, a multi-month
-structural view there.
+**Divergence.** We classify these markets more favourably than
+LlamaRisk would, reflecting a focus on 24h LCR stress rather than
+multi-month structural risk. Under our multi-day NSFR-style horizon
+(`--horizon-days 7`), the same markets shift toward green-watch or
+yellow, closer to the LlamaRisk classification.
 
 ---
 
@@ -157,7 +146,7 @@ structural view there.
 
 | Use case | Best framework |
 |---|---|
-| Periodic regulatory-style market panorama (snapshot) | Our framework (open-source, reproducible) |
+| Vault curator risk discipline check (snapshot) | Our framework (open-source, reproducible) |
 | Real-time alerting on parameter drift | Block Analitica (production dashboards) |
 | Pre-launch parameter calibration | Gauntlet / ChaosLabs (agent simulation) |
 | Regulatory comparability | Our framework (BCBS 238 anchor) |
@@ -179,16 +168,14 @@ structural view there.
    multi-day repricing). No incumbent publishes a backtest framework
    that allows external verification.
 
-3. **A survival-frontier verdict on the actual book.** The primary
-   metric is the largest 24-hour outflow a market absorbs from
-   measured, keeper-gated exit capacity, with an explicit split
-   between realized bad debt and latent insolvency. The decomposition
-   isolates liability-liquidity risk from asset-solvency risk, the
-   dichotomy the panorama documents.
+3. **Decoupled scenario architecture** for price stress and
+   liquidity stress. The decomposition isolates the contribution of
+   each stress component, addressing a methodological gap where
+   cumulative-stress single scenarios over-estimate aggregate risk.
 
 The trade-off is that we do not capture the dynamic effects (MEV,
 liquidator competition, oracle feedback) that agent-based simulations
-capture. For a complete risk assessment, our framework should be
+capture. For a comprehensive risk assessment, our framework should be
 combined with incumbent agent-based work, not replace it.
 
 ---

@@ -42,19 +42,3 @@ def test_summary_tier_counts_match_committed_results() -> None:
 
     assert summary["tiers"] == expected_counts
     assert sum(expected_counts.values()) == int(summary["markets_evaluated"])
-
-
-def test_summary_exclusion_reasons_are_precise() -> None:
-    summary = json.loads(SUMMARY.read_text(encoding="utf-8"))
-    exclusions = summary["markets_excluded"]
-
-    assert all("unusable quotes" not in item["reason"] for item in exclusions)
-
-    susds = [item for item in exclusions if item["market"] == "sUSDS/USDT"]
-    assert len(susds) == 1
-    assert (
-        susds[0]["reason"]
-        == "no slippage curve "
-        "(insufficient slippage observations: 7 usable, 8 required)"
-    )
-

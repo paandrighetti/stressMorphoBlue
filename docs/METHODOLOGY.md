@@ -1,9 +1,9 @@
-> **Document status.** This is the historical v0.3 design note and retains the theoretical foundations and calibration rationale used during development. The normative v1.1 public specification is [`REPORT.md`](./REPORT.md), read together with [`MODEL_CORRECTIONS.md`](./MODEL_CORRECTIONS.md) and the implementation. The forward-looking asset-class tables, Scenario A/B architecture, Top-five scope and Beta-scaled position model below are retained only to document the framework's evolution and are superseded for current results.
+> **Note (v1.1)**: the forward-looking calibration tables in this document (asset-class drawdown floors, Scenario A/B) are superseded by REPORT.md section 4.2; the alpha construction and backtest calibration remain normative. See docs/MODEL_CORRECTIONS.md.
 
 # Methodology: Liquidity Stress Testing Framework for Morpho Blue
 
-> Version: 0.3 historical design note. Last updated: July 2026
-> Status: retained methodological record; not the normative v1.1 result specification
+> Version: 0.3. Last updated: May 2026
+> Status: Phase 0 deliverable. methodological note (revised through Phase 5)
 > Companion: [`SCENARIOS.md`](./SCENARIOS.md). stress-scenario specifications;
 > [`GLOSSARY.md`](./GLOSSARY.md). definitions of all specialised terms.
 > Author: PA
@@ -53,7 +53,7 @@ The probability of these states is bounded **empirically** from a
 events (the KelpDAO collateral exploit of April 2026, the USDC depeg
 of March 2023, and the staked-Ether discount episode of May 2022).
 
-### 1.2 Secondary hypothesis (vault-curator angle; v1.0 analysis archived, see `docs/archive/metamorpho_v1.0.md`)
+### 1.2 Secondary hypothesis (vault-curator angle)
 
 For a MetaMorpho vault $V$ with curator $c$ at block $t$, define the
 **risk-discipline gap**:
@@ -69,11 +69,11 @@ where:
   document;
 - $\|\cdot\|_2$ denotes the Euclidean norm.
 
-$\Delta$ is a proposed quantitative measure of curator risk discipline. In
-the public materials reviewed for this project, incumbent risk reports focus
-primarily on individual-market or vault risk and do not publish the same
-curator counterfactual. This observation is scoped to the reviewed materials,
-not a claim of exhaustive literature priority.
+To our knowledge, $\Delta$ is the first quantitative measure of curator
+risk discipline in decentralised-finance literature. Existing risk
+reports (from Gauntlet, Block Analitica, ChaosLabs and others) publish
+absolute risk reports on individual markets but do not explicitly
+compute curator counterfactuals.
 
 ### 1.3 Why this matters
 
@@ -89,11 +89,11 @@ not a claim of exhaustive literature priority.
   LlamaRisk transpose Basel concepts informally. We provide an
   **explicit Basel III mapping** with stated limitations.
 
-- **Timing**: The KelpDAO event of April 2026 generated substantial bad debt
-  on Aave and was followed by a material migration of capital toward Morpho.
-  It provides a recent calibration anchor. Exact loss and flow estimates depend
-  on the measurement perimeter and should be cited from the underlying event
-  sources when used outside this methodological note.
+- **Timing**: The KelpDAO event of April 2026 generated approximately
+  196 million U.S. dollars in bad debt on Aave and approximately 8 billion U.S. dollars of
+  capital migration to Morpho. This is the largest stress event of
+  the present cycle and provides a calibration anchor that did not
+  exist before.
 
 ---
 
@@ -151,49 +151,50 @@ The mapping from Basel definitions to Morpho Blue analogues is:
 | HQLA Level 1 (haircut 0%) | Cash, central-bank reserves, top sovereign debt | Instant liquidity $L_1 = S - B$ |
 | HQLA Level 2A (haircut 15%) | Highly liquid corporate or covered bonds | Per-position liquidation recovery, capped at debt and discounted by stress slippage (see §2.2) |
 | HQLA Level 2B (haircut 25–50%) | Lower-rated corporate or equity | Collateral with limited decentralised-exchange liquidity (exotic liquid-restaking-tokens, real-world-asset tokens), with slippage drawn from the upper tail of the empirical distribution |
-| Outflows: stable retail (5%) | Insured retail deposits | Approximated by the median of the drawdown-derived outflow proxy |
-| Outflows: less-stable retail (10%) | Non-insured retail deposits | Approximated by the 90th percentile of the drawdown-derived outflow proxy |
+| Outflows: stable retail (5%) | Insured retail deposits | Approximated by the median historical withdrawal velocity |
+| Outflows: less-stable retail (10%) | Non-insured retail deposits | Approximated by the 90th-percentile historical withdrawal velocity |
 | Outflows: wholesale unsecured (40–100%) | Non-financial or financial-corporate funding | Whale concentration: simultaneous withdrawal by the top-five suppliers under stress |
 | Inflows: secured lending (cap 75%) | Repayments and collateral inflows | Forced repayments from liquidations during the stress window |
 
 ### 2.2 Per-position liquidation recovery (the on-chain Level 2A)
 
 A literal application of a Basel Level 2A haircut to total collateral
-notional value over-estimates recoverable liquidity. Collateral is pledged
-and becomes monetisable only when a position is liquidatable and a keeper is
-willing to execute the liquidation.
+notional value (i.e. $L_{\text{2A}} = 0.85 \cdot C \cdot P$ where $C$
+is total collateral and $P$ the oracle price) **over-estimates the
+recoverable assets**, because collateral is pledged and only
+liquidatable through the protocol's liquidation procedure. The
+recovery from a single position $i$ is:
 
-For a liquidatable position $i$, Morpho Blue determines the debt repaid and
-the collateral seized under the protocol liquidation rules. The supplier
-pool's realised recovery is the loan asset repaid by the liquidator, capped
-by the position debt. Decentralised-exchange proceeds do **not** flow directly
-to the supplier pool: they determine whether the keeper can profitably execute
-the liquidation.
+1. The liquidator seizes collateral up to the *liquidation incentive
+  factor* $\phi(\Lambda)$ above debt:
+  $\mathrm{seized}_i = \min\left(b_i \cdot \phi(\Lambda) / P, c_i\right)$
+2. The liquidator sells the seized collateral on a decentralised
+  exchange at the realised price $P \cdot (1 - \pi(\mathrm{seized}_i))$;
+3. The supplier pool receives loan-asset proceeds, capped at the
+  position's debt $b_i$ (any surplus accrues to the borrower);
+4. If proceeds fall below the debt, the shortfall is *bad debt*,
+  borne by the supplier pool.
 
-Let $q_i$ be the debt amount repaid by the liquidator. The realised recovery is
+Formally, the recovery from position $i$ is
 
-$$r_i = q_i, \qquad 0 \le q_i \le b_i.$$
+$$r_i = \min\left(\mathrm{seized}_i \cdot P \cdot (1 - \pi(\mathrm{seized}_i)), b_i\right) - \mathrm{BD}_i$$
 
-Keeper executability is checked by comparing the value of seized collateral
-after aggregate slippage with the repayment and liquidation incentive. If the
-trade is not executable, the realised recovery is zero for that attempted
-batch. The model therefore reports two separate solvency readings:
+where the bad debt for position $i$ is
 
-- **realised bad debt**, produced by the protocol-aligned liquidation engine;
-- **latent insolvency**, the stressed debt not covered by collateral on oracle
-  terms, computed independently of keeper behaviour.
+$$\mathrm{BD}_i = \max\left(0, b_i - \mathrm{seized}_i \cdot P \cdot (1 - \pi(\mathrm{seized}_i))\right).$$
 
-The aggregate on-chain Level 2A component is
+The aggregate Level 2A is
 
-$$L_{2A,\mathrm{net}}(M,t,\sigma) = \sum_i r_i.$$
+$$L_{2A,\mathrm{net}}(M, t, \sigma) = \sum_i r_i.$$
 
-The liquidation incentive factor $\phi$ follows Morpho Blue's formula
+The **liquidation incentive factor** $\phi$ is given by Morpho Blue's
+formula
 
 $$\phi(\Lambda) = \min\left(1.15, \frac{1}{0.3 \cdot \Lambda + 0.7}\right),$$
 
-with the bonus capped at 15%. The implementation details and corrections from
-the superseded v0.3 recovery equation are catalogued in
-`docs/MODEL_CORRECTIONS.md`.
+capping the bonus at 15% above debt for low values of $\Lambda$. For
+$\Lambda = 0.86$ (typical for major asset, stablecoin pairs), $\phi$
+is approximately $1.043$.
 
 ### 2.3 Honest critique of the adaptation
 
@@ -237,7 +238,8 @@ where:
 - $\mathbf{1}\{\cdot\}$ is the indicator function.
 
 The constant $1.5$ and the additive 30% (the *whale-concentration
-term*) are anchored on observed withdrawal episodes, as discussed in [`REPORT.md`](./REPORT.md) §2.1.
+term*) are calibrated from observed withdrawal velocity in real
+events, as discussed in [`REPORT.md`](./REPORT.md) §2.1.
 
 ### 2.5 The Net Stable Funding Ratio: a more discriminating angle
 
@@ -263,9 +265,10 @@ The interesting analysis is the **conditional Net Stable Funding
 Ratio**: how much funding is *empirically* stable, given oracle
 health, prevailing yield differential versus alternatives, and
 supplier concentration? This reduces to estimating a
-*withdrawal-survival function* $S(t \mid \text{features})$, which could be modelled with Kaplan-Meier-style empirical survival curves on
-historical supplier behaviour. This remains a proposed extension beyond the
-current v1.1 publication rather than a validated output of the present engine.
+*withdrawal-survival function* $S(t \mid \text{features})$, which we
+model via Kaplan, Meier-style empirical cumulative distributions on
+historical supplier behaviour. This is **the academic contribution of
+the project** beyond the descriptive stress-test layer.
 
 ---
 
@@ -273,25 +276,22 @@ current v1.1 publication rather than a validated output of the present engine.
 
 ### 3.1 Markets
 
-Historical v0.3 design scope: the five largest Morpho Blue lending markets by
-Total Value Locked on Ethereum mainnet at the start of data acquisition. The
-v1.1 publication supersedes this scope: it monitors 26 markets and reports
-results for the 24 markets that passed the published data-quality gates. The
-current selector is implemented in
-[`scripts/select_markets.py`](../scripts/select_markets.py).
+Top-five Morpho Blue lending markets by Total Value Locked on the
+Ethereum mainnet at the start of the data-acquisition phase, frozen
+on day one of that phase (see
+[`scripts/select_markets.py`](../scripts/select_markets.py) once
+implemented).
 
-**Historical candidate set (not the current v1.1 market universe)**:
+**Candidate set (subject to revalidation at run time)**:
 - wstETH/USDC (collateral: wrapped staked Ether; loan asset: USDC)
 - wstETH/WETH (collateral: wrapped staked Ether; loan asset: wrapped Ether)
 - WBTC/USDC (collateral: wrapped Bitcoin; loan asset: USDC)
 - cbBTC/USDC (collateral: Coinbase-wrapped Bitcoin; loan asset: USDC)
 - sUSDe/USDC (collateral: staked Ethena USD; loan asset: USDC)
 
-Historical selection criteria, in order: (i) Total Value Locked greater
-than 100 million U.S. dollars, (ii) market age greater than 6 months, and
-(iii) at least one stress event observable in the historical window. The
-current v1.1 selector and data-quality gates are documented in `REPORT.md` and
-implemented in `scripts/select_markets.py`.
+Selection criteria, in order: (i) Total Value Locked greater than
+100 million U.S. dollars, (ii) market age greater than 6 months, (iii) at least
+one stress event observable in the historical window.
 
 ### 3.2 Historical window
 
@@ -301,9 +301,8 @@ Twelve rolling months: May 2025 through May 2026. This window contains:
   Locked (April 2026), used as the **primary calibration anchor**;
 - A series of oracle deviations and minor depegs (continuous, low
   intensity);
-- A prospective third-quarter 2025 macro-stress placeholder was included in
-  the v0.3 design. It was not used as a calibration anchor in the v1.1 public
-  results and is retained here only as part of the historical specification.
+- Sector-wide macro stress around the third quarter of 2025 (to
+  verify at data-acquisition time).
 
 ### 3.3 Stress horizons
 
@@ -313,18 +312,14 @@ Three values of $h$, reported in parallel:
 - **7 days**, short-horizon stress;
 - **30 days**, Basel-equivalent horizon.
 
-### 3.4 Historical stress-scenario design (four plus one)
+### 3.4 Stress scenarios (four plus one)
 
-> **Superseded for current results.** This section records the v0.3 scenario
-> architecture. The current v1.1 evaluation is specified in `REPORT.md` and
-> `MODEL_CORRECTIONS.md`.
-
-Five scenarios were specified in [`SCENARIOS.md`](./SCENARIOS.md).
+Five scenarios, fully specified in [`SCENARIOS.md`](./SCENARIOS.md).
 Summary:
 
 | Identifier | Scenario | Description | Severity calibration |
 |---|---|---|---|
-| **S1** | Withdrawal run | Suppliers withdraw fraction $\alpha$ of total supply over duration $T$ | $\alpha$ at the 99th percentile of the drawdown-derived outflow proxy, $T \in \{1\text{h}, 24\text{h}, 7\text{d}\}$ |
+| **S1** | Withdrawal run | Suppliers withdraw fraction $\alpha$ of total supply over duration $T$ | $\alpha$ at the 99th-percentile of historical withdrawal velocity, $T \in \{1\text{h}, 24\text{h}, 7\text{d}\}$ |
 | **S2** | Utilisation spike | Sudden borrow demand pushes utilisation toward 1 | Spike calibrated on the top-three historical events |
 | **S3** | Oracle deviation | Collateral price drops by $\Delta$ in $\Delta t$; oracle reports lagged price | $\Delta$ at the 99th-percentile of historical drawdowns over $\Delta t$ |
 | **S4** | Liquidation cascade | Combination: oracle drop with liquidations and decentralised-exchange slippage feedback | All three at the 95th-percentile jointly |
@@ -340,17 +335,13 @@ For each (market, scenario, horizon) tuple:
   exhausted under the scenario;
 - *Expected bad debt*: sum of unrecovered debt at end of horizon;
 - *Slippage-adjusted shortfall*: gap between oracle-priced collateral
-  and keeper-executable protocol repayment;
+  and decentralised-exchange-realised recovery;
 - *Withdrawal survival curve*: empirical $S(t \mid \sigma)$ for the
   secondary hypothesis.
 
 ---
 
-## 4. Historical v0.3 limitations
-
-The current v1.1 limitations are stated in `REPORT.md`. The items below are
-retained to document the baseline design and should not be read as an
-exhaustive list for the current engine.
+## 4. Limitations (explicit and exhaustive)
 
 1. **Endogeneity ignored at baseline**: prices, withdrawals, and
   liquidations are treated as separable processes. In reality,

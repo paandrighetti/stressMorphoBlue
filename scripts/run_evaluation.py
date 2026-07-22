@@ -88,6 +88,7 @@ def _no_curve_reason(symbol: str, fit_note: str) -> str:
                 f"redemption, AMM depth not applicable")
     return f"no slippage curve ({fit_note})"
 HOURS_24 = int(24 * 3600 / BLOCK_TIME_SEC)
+DRAWDOWN_WINDOW_OBSERVATIONS = 24
 CACHE = Path("data/cache")
 
 
@@ -114,6 +115,33 @@ def _composite(sevs: list[str]) -> str:
     if "yellow" in sevs:
         return "yellow"
     return "green"
+
+
+def _rolling_drawdowns(
+    prices: np.ndarray,
+    window: int = DRAWDOWN_WINDOW_OBSERVATIONS,
+) -> np.ndarray:
+    """Return valid peak-to-window-min drawdowns, including the final window."""
+    values = np.asarray(prices, dtype=float)
+    if window < 2:
+        raise ValueError("drawdown window must contain at least two observations")
+    if values.ndim != 1:
+        raise ValueError("prices must be a one-dimensional array")
+    if values.size < window:
+        return np.array([], dtype=float)
+
+    observations: list[float] = []
+    for start in range(values.size - window + 1):
+        sample = values[start : start + window]
+        peak = float(sample[0])
+        window_min = float(np.min(sample))
+        if not np.isfinite(peak) or not np.isfinite(window_min):
+            continue
+        if peak <= 0 or window_min <= 0:
+            continue
+        observations.append(max(0.0, (peak - window_min) / peak))
+
+    return np.asarray(observations, dtype=float)
 
 
 def _col(df: pd.DataFrame, *candidates: str) -> str:
@@ -146,6 +174,14 @@ def main() -> None:
                     help="minimum slippage observations per collateral for the power-law fit")
     ap.add_argument("--allow-missing-positions", action="store_true",
                     help="degraded L1-only run for markets without reconstructed positions")
+    ap.add_argument(
+        "--allow-synthetic-drawdowns",
+        action="store_true",
+        help=(
+            "explicitly permit a synthetic drawdown distribution when no valid "
+            "measured 24h windows exist; never use for publication"
+        ),
+    )
     ap.add_argument("--out-csv", default="docs/evaluation_results.csv")
     ap.add_argument("--out-json", default="docs/evaluation_summary.json")
     args = ap.parse_args()
@@ -317,13 +353,21 @@ def main() -> None:
         tti_h = tti * BLOCK_TIME_SEC / 3600 if tti is not None else float("inf")
         sev2 = _severity_tti(tti_h)
 
-        dds = []
-        for i in range(len(prices) - 24):
-            peak = prices[i]
-            if peak <= 0:
-                continue
-            dds.append(max(0.0, (peak - prices[i:i + 24].min()) / peak))
-        dist = EmpiricalDistribution(observations=np.array(dds) if dds else np.array([0.05, 0.10, 0.20, 0.30]))
+        drawdown_observations = _rolling_drawdowns(prices)
+        if drawdown_observations.size:
+            drawdown_source = "measured"
+        elif args.allow_synthetic_drawdowns:
+            drawdown_observations = np.array([0.05, 0.10, 0.20, 0.30], dtype=float)
+            drawdown_source = "synthetic_override"
+            log.warning(
+                "%s: no valid measured 24h drawdowns; using explicit synthetic fallback",
+                label,
+            )
+        else:
+            excluded.append((mid, label, "no valid measured 24h drawdown windows"))
+            continue
+
+        dist = EmpiricalDistribution(observations=drawdown_observations)
         mc = run_monte_carlo(
             initial_state=state,
             distribution=dist,
@@ -360,7 +404,7 @@ def main() -> None:
         # redemption-arbitraged correlated pairs (wstETH/WETH etc.) whose
         # window-worst 24h drawdown is near zero; cap the shock at 3x the
         # worst observed, floored at 5%, for those markets.
-        worst_dd = max(dds) if dds else 0.0
+        worst_dd = float(drawdown_observations.max())
         dd_x = args.extreme_drawdown if worst_dd >= 0.03 else min(
             args.extreme_drawdown, max(0.05, 3.0 * worst_dd)
         )
@@ -395,6 +439,8 @@ def main() -> None:
             "lsr24": lcr, "tti_hours": tti_h, "p_bad_debt": p_bd,
             "p_insolvency": p_insolv, "insolvency_p99_pct": insolv_p99_pct,
             "bad_debt_p99_pct": bd_p99_pct,
+            "drawdown_source": drawdown_source,
+            "drawdown_observations": int(drawdown_observations.size),
             "tier": sev1,
             "severity": sev1,  # backward-compatible publication alias
             "tti_severity": sev2,
@@ -438,7 +484,21 @@ def main() -> None:
         "extreme_illiquidity_failures": int(df["extreme_illiq_fail"].sum()),
         "extreme_insolvency_failures": int(df["extreme_insolv_fail"].sum()),
         "extreme_fail_tvl_share_pct": float(df.loc[df["extreme_fail"], "supply_assets"].sum() / tv * 100) if tv else 0.0,
-        "extreme_params": {"drawdown": args.extreme_drawdown, "alpha": args.extreme_alpha},
+        "extreme_params": {
+            "nominal_drawdown_cap": args.extreme_drawdown,
+            "outflow_alpha": args.extreme_alpha,
+            "correlated_pair_policy": (
+                "when the worst measured 24h drawdown is below 3%, use the "
+                "minimum of the nominal cap and max(5%, 3x measured worst)"
+            ),
+            "per_market_drawdown_column": "extreme_drawdown_used",
+        },
+        "data_quality": {
+            "synthetic_drawdown_markets": df.loc[
+                df["drawdown_source"] != "measured", "market"
+            ].tolist(),
+            "publication_requires_measured_drawdowns": True,
+        },
         "n_paths": args.n_paths,
     }
     Path(args.out_json).write_text(json.dumps(summary, indent=2))

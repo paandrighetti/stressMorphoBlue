@@ -16,6 +16,7 @@ non-dollar markets are never mislabelled as dollars.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -23,6 +24,12 @@ import click
 import pandas as pd
 
 STABLE_LOANS = {"USDC", "USDT", "PYUSD", "RLUSD", "USDtb", "AUSD", "DAI", "USDS", "USDe"}
+
+
+def _canonical_sha256(path: Path) -> str:
+    """Hash text artifacts with CRLF normalised for cross-platform checkout."""
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def _loan_sym(market_label: str) -> str:
@@ -43,16 +50,68 @@ def _pct(x: float, digits: int = 1) -> str:
 @click.option("--results", default="docs/evaluation_results.csv")
 @click.option("--summary", default="docs/evaluation_summary.json")
 @click.option("--outdir", default="docs/_generated")
-@click.option("--snapshot-date", default=None,
-              help="human-readable snapshot date; defaults to today (UTC)")
-def main(results: str, summary: str, outdir: str, snapshot_date: str | None) -> None:
-    df = pd.read_csv(results).sort_values("alpha_star")
+@click.option(
+    "--manifest",
+    default="docs/evaluation_manifest.json",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    show_default=True,
+    help="immutable metadata for the committed evaluation outputs",
+)
+@click.option(
+    "--snapshot-date",
+    default=None,
+    help="optional assertion; must match the manifest snapshot date",
+)
+def main(
+    results: str,
+    summary: str,
+    outdir: str,
+    manifest: Path,
+    snapshot_date: str | None,
+) -> None:
+    result_path = Path(results)
+    summary_path = Path(summary)
+    manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+
+    for path in (result_path, summary_path):
+        key = path.as_posix()
+        try:
+            expected = manifest_data["files"][key]["sha256"]
+        except KeyError as exc:
+            raise click.ClickException(f"manifest has no hash for {key}") from exc
+        observed = _canonical_sha256(path)
+        if observed != expected:
+            raise click.ClickException(
+                f"{key} does not match {manifest.as_posix()}; rebuild the manifest "
+                "after a deliberate evaluation run"
+            )
+
+    df = pd.read_csv(result_path).sort_values("alpha_star")
     tier_col = "tier" if "tier" in df.columns else "severity"
-    from datetime import date
-    snap_date = snapshot_date or date.today().isoformat()
-    snap_block = int(df["block"].max())
+    sm = json.loads(summary_path.read_text(encoding="utf-8"))
+    snap_date = str(manifest_data["snapshot_date"])
+    snap_block = int(manifest_data["state_block"])
+    if snapshot_date is not None and snapshot_date != snap_date:
+        raise click.ClickException(
+            f"--snapshot-date={snapshot_date} conflicts with manifest date {snap_date}"
+        )
+    observed_block = int(df["block"].max())
+    if observed_block != snap_block:
+        raise click.ClickException(
+            f"manifest block {snap_block} does not match CSV block {observed_block}"
+        )
+
+    observed_tiers = {
+        str(key): int(value)
+        for key, value in df[tier_col].value_counts().to_dict().items()
+    }
+    expected_tiers = {str(key): int(value) for key, value in sm["tiers"].items()}
+    if observed_tiers != expected_tiers:
+        raise click.ClickException(
+            f"tier counts disagree: CSV={observed_tiers}, summary={expected_tiers}"
+        )
+
     snap_line = f"**Snapshot**: {snap_date}, state block {snap_block:,}. "
-    sm = json.loads(Path(summary).read_text())
     out = Path(outdir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -116,7 +175,8 @@ def main(results: str, summary: str, outdir: str, snapshot_date: str | None) -> 
         snap_line +
         f"**Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: {n} of 26 monitored markets "
         f"evaluated. Survival frontier alpha\\* (max absorbable 24h outflow): median {_pct(a_med)}, "
-        f"minimum {_pct(a_min)}; tiers {tier_txt}. Extreme scenario: {illiq}/{n} fail on liquidity, "
+        f"minimum {_pct(a_min)}; tiers {tier_txt}. Class-aware extreme scenario: "
+        f"{illiq}/{n} fail on liquidity, "
         f"{insolv}/{n} on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in "
         f"docs/MODEL_CORRECTIONS.md.\n"
     )
@@ -142,10 +202,7 @@ def main(results: str, summary: str, outdir: str, snapshot_date: str | None) -> 
     (out / "mirror_findings.md").write_text(mirror, encoding="utf-8")
 
     print(f"Wrote {out}/report_results.md, readme_block.md, mirror_findings.md")
-    print("\n" + "=" * 30 + " PASTE BACK " + "=" * 30 + "\n")
-    print(report)
-    print(readme)
-    print(mirror)
+    print("Generated fragments are ready for scripts/assemble_docs.py")
 
 
 if __name__ == "__main__":
