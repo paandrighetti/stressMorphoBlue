@@ -186,7 +186,7 @@ def main() -> None:
                 fit_notes[sym] = f"flat fallback (max {bps_max:.1f} bps @ {vol_max:,.0f} native)"
                 log.info("%s: %s", sym, fit_notes[sym])
             else:
-                fit_notes[sym] = f"unusable quotes ({len(usable)}/{len(sub)} positive-bps rows)"
+                fit_notes[sym] = (f"insufficient slippage observations: {len(usable)} usable, "f"{args.min_fit_obs} required")
             continue
         try:
             res = fit_with_diagnostics(slip, sym, min_observations=args.min_fit_obs)

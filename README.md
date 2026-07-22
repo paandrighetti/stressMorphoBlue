@@ -7,7 +7,7 @@
 > regulatory standards (specifically the Liquidity Coverage Ratio of
 > document BCBS 238, 2013).
 
-**Status**: v1.1 engine (contract-aligned liquidation accounting, IRM accrual, single-counted LSR-24; corrections catalogued in [docs/MODEL_CORRECTIONS.md](./docs/MODEL_CORRECTIONS.md)). 146-test suite; current status is shown by GitHub Actions. Headline figures are generated from `docs/evaluation_results.csv` by `scripts/generate_report_tables.py` and injected by `scripts/assemble_docs.py`, never hand-transcribed. Not a production risk system. Not investment advice.
+**Status**: v1.1 engine (contract-aligned liquidation accounting, IRM accrual, single-counted LSR-24; corrections catalogued in [docs/MODEL_CORRECTIONS.md](./docs/MODEL_CORRECTIONS.md)). The complete automated test suite is run by GitHub Actions. Headline figures are generated from `docs/evaluation_results.csv` by `scripts/generate_report_tables.py` and injected by `scripts/assemble_docs.py`, never hand-transcribed. Not a production risk system. Not investment advice.
 
 ---
 
@@ -128,7 +128,7 @@ mainnet; evaluated coverage and headline figures are generated from
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
-# Run the 146-test suite (runtime depends on the environment)
+# Run the complete automated test suite (runtime depends on the environment)
 PYTHONPATH=src pytest tests/ -v
 
 # Run the Phase-5 end-to-end demonstration
