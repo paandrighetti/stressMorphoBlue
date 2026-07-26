@@ -5,15 +5,16 @@
   "network": "ethereum-mainnet",
   "state_block": 25545086,
   "engine": "v1.1",
+  "methodology_revision": "rolling-window-v2",
   "publication_policy": "Snapshot metadata and hashes are immutable for the committed evaluation outputs. A new evaluation requires a new manifest.",
   "files": {
     "docs/evaluation_results.csv": {
-      "sha256": "f22f8191babd09e2f4422dc0d0c2301507d4b7a15bf61fe0d77eb63d631d42e2",
-      "size_bytes": 7337
+      "sha256": "d49f5de7311c78ab44e6285e2d98ee0cd188384fd042774d9a248ffb1ef091d6",
+      "size_bytes": 7756
     },
     "docs/evaluation_summary.json": {
-      "sha256": "65057a991900efb0b3bad91a01f68c6a52c42cc6ad365fea7b0b316fedb32741",
-      "size_bytes": 923
+      "sha256": "2301c2ab55452cc519211b24ffac82bf10b546233e9c694e2adf44aa62fbcf83",
+      "size_bytes": 1335
     }
   }
 }

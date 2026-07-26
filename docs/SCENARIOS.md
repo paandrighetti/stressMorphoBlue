@@ -333,14 +333,14 @@ sophisticated model would solve a fixed point per block.
 
 ---
 
-### S5: KelpDAO replay (event-driven)
+### S5: rsETH incident-inspired path (event-driven)
 
-**Description**: counterfactual replay of the April 2026 KelpDAO event
-applied to current Morpho Blue state.
+**Description**: stylised path inspired by the April 2026 rsETH incident,
+applied to current Morpho Blue state. It is not an exact replay of protocol
+flows or final losses.
 
-**Shock function $\delta_{S5}$**: reconstruct the historical
-price-and-event path from on-chain data covering 19 April through 22
-April 2026. Apply this path as $P_\tau^{\text{market}}$ for the
+**Shock function $\delta_{S5}$**: use the retained hourly fixture centred on the modelled 20 April shock.
+Apply this stylised path as $P_\tau^{\text{market}}$ for the
 affected collateral types. For unaffected collateral types, no shock
 is applied.
 
@@ -351,8 +351,8 @@ cascade), with the historical path replacing the synthetic drawdown.
 
 - *Counterfactual bad debt* per market under the worst-event-of-2026
   conditions;
-- *Comparison ratio*: bad debt under KelpDAO replay divided by bad
-  debt under S4 at the 95th-percentile joint shock.
+- *Comparison ratio*: bad debt under the incident-inspired path divided by
+  bad debt under S4 at the 95th-percentile joint shock.
 
 This scenario is **the validation anchor** of the framework: a
 credible model should flag fragility in markets that, if they had
@@ -371,7 +371,7 @@ existed identically in April 2026, would have suffered.
 | $\Delta$ (S3, S4) | Oracle price feed | Empirical 99th-percentile negative log-return over $\Delta t$ | Per collateral; cross-checked against centralised-exchange price |
 | $\lambda$ (S3) | On-chain oracle configuration | Read directly from contract | Chainlink heartbeat or Time-Weighted Average Price window |
 | $\pi(C, V)$ | Decentralised-exchange trades and keyless aggregator quotes (CoW Protocol, KyberSwap) | Fit power law $\pi(V) = a \cdot V^b$ via ordinary least squares regression in log-space; fallback to lookup | Validate fit per asset |
-| KelpDAO path (S5) | On-chain data, 19 April through 22 April 2026 | Direct extraction, no fitting | Anchor event |
+| rsETH incident-inspired path (S5) | Retained hourly fixture, with shape informed by the April 2026 incident | Stylised path; not an exact replay | Primary stress anchor |
 
 ### 4.2 Statistical caveat (important)
 
@@ -459,10 +459,11 @@ particularly for assets with short history. Mitigations:
 
 ## 6. Validation strategy
 
-### 6.1 Backtest validation (KelpDAO ex-ante)
+### 6.1 Backtest validation (incident-inspired fixture)
 
-Apply the framework retrospectively at $t_0$ = 18 April 2026 (one day
-before the KelpDAO event). The framework **passes** if, for affected
+Apply the framework at the fixture day-zero, before the modelled shock.
+The fixture is evaluated as a stylised validation test rather than an exact
+ex-ante reconstruction of the incident. The framework **passes** if, for affected
 markets, at least one of the following holds:
 
 - $\mathrm{LCR_{oc}}(M, t_0, \sigma_{S5}, h = 24\text{h}) < 100\%$;
@@ -526,7 +527,7 @@ which.
 | 2 | Interest rate model, oracle, slippage models implemented | Phase 2 data |
 | 3 | S1, S2, S3 standalone | Phase 2 |
 | 3 | S4 cascade (both regimes) | S3 |
-| 3 | S5 KelpDAO replay | S4 |
+| 3 | S5 rsETH incident-inspired path | S4 |
 | 3 | Monte Carlo mode for all scenarios | Point mode complete |
 | 4 | Validation per §6 | All scenarios |
 | 5 | Forward-looking application on top-five markets | Phase 4 pass |

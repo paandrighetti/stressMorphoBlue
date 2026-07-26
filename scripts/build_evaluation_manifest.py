@@ -44,6 +44,7 @@ def main() -> None:
         "network": "ethereum-mainnet",
         "state_block": args.state_block,
         "engine": "v1.1",
+        "methodology_revision": "rolling-window-v2",
         "publication_policy": (
             "Snapshot metadata and hashes are immutable for the committed "
             "evaluation outputs. A new evaluation requires a new manifest."

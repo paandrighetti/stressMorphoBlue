@@ -48,3 +48,13 @@ panorama's primary metric became the survival frontier alpha\*, and all
 published figures flow through `run_evaluation.py`,
 `generate_report_tables.py` and `assemble_docs.py` without manual
 transcription.
+
+
+## C7. Rolling-window boundary and backtest fallback (publication rerun required)
+
+The rolling drawdown implementation now includes the final admissible window
+(`len(path) - window + 1`). The backtest runner also refuses to replace an
+empty measured distribution with synthetic drawdowns. Because the corrected
+window set can alter calibrated outflow alpha and companion time-to-illiquidity
+metrics, committed evaluation outputs must be regenerated before this change is
+released as part of a publication snapshot.

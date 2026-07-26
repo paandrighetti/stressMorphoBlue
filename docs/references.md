@@ -190,11 +190,15 @@ framework. Definitions of all specialised terms used below are in
 
 ## F. Stress-event historical data
 
-### F.1 KelpDAO collateral exploit (April 2026)
+### F.1 rsETH incident (April 2026)
 
-- Coverage: multiple sources, including post-mortem from the Aave
-  governance forum.
-- **Used for**: the primary calibration anchor for scenario S5.
+- Aave governance, *rsETH incident — 2026-04-18*:
+  https://governance.aave.com/t/rseth-incident-2026-04-18/24481
+- Aave governance, *rsETH Incident Report (April 20, 2026)*:
+  https://governance.aave.com/t/rseth-incident-report-april-20-2026/24580
+- **Used for**: chronology and severity context for the stylised S5 fixture.
+  Public bad-debt estimates changed as recovery assumptions changed; the
+  fixture does not calibrate to a single asserted final loss.
 
 ### F.2 USDC depeg (March 2023)
 

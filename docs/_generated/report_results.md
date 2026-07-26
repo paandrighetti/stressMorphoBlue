@@ -66,5 +66,5 @@ Latent insolvency = debt not covered by collateral on stressed oracle terms (Mor
 
 #### Documented exclusions
 
-* **sUSDS/USDT**: no slippage curve (unusable quotes (7/7 positive-bps rows))
+* **sUSDS/USDT**: no slippage curve (insufficient slippage observations: 7 usable, 8 required)
 * **msY/USDC**: no oracle price series (oracle interface not supported this window)

@@ -69,11 +69,12 @@ where:
   document;
 - $\|\cdot\|_2$ denotes the Euclidean norm.
 
-To our knowledge, $\Delta$ is the first quantitative measure of curator
-risk discipline in decentralised-finance literature. Existing risk
-reports (from Gauntlet, Block Analitica, ChaosLabs and others) publish
-absolute risk reports on individual markets but do not explicitly
-compute curator counterfactuals.
+Within the public materials reviewed for this project, we did not identify
+an operationally comparable curator-level counterfactual metric. Existing
+risk reports from Gauntlet, Block Analitica, Chaos Labs and others commonly
+publish absolute market-risk assessments; this framework instead makes the
+curator allocation counterfactual explicit. This is a scoped literature and
+industry review, not a claim of exhaustive priority.
 
 ### 1.3 Why this matters
 
@@ -82,18 +83,22 @@ compute curator counterfactuals.
   decentralised-finance lending pools are inherently fragile, but
   published work focuses on monolithic pools (Aave, Compound). Morpho
   Blue's *isolated-market design*, in which each market is an
-  immutable tuple sharing no liquidity with others, has no comparable
-  formal stress-testing framework.
+  immutable tuple sharing no liquidity with others, is not addressed by an
+  operationally comparable public framework identified in the sources
+  reviewed for this project.
 
 - **Industry gap**: Risk reports from Gauntlet, Block Analitica and
   LlamaRisk transpose Basel concepts informally. We provide an
   **explicit Basel III mapping** with stated limitations.
 
-- **Timing**: The KelpDAO event of April 2026 generated approximately
-  196 million U.S. dollars in bad debt on Aave and approximately 8 billion U.S. dollars of
-  capital migration to Morpho. This is the largest stress event of
-  the present cycle and provides a calibration anchor that did not
-  exist before.
+- **Timing**: The rsETH incident was disclosed on 18 April 2026 and
+  produced a severe liquidity and bad-debt stress on Aave. Public estimates
+  evolved materially as recovery assumptions changed, from approximately
+  123.7--230.1 million U.S. dollars in the initial incident report to
+  approximately 62.4--162.5 million U.S. dollars in a later recovery
+  scenario. The fixture used here is therefore a stylised stress anchor,
+  not an exact reconstruction of a single final loss figure or a claim that
+  subsequent withdrawals migrated specifically to Morpho.
 
 ---
 
@@ -297,8 +302,8 @@ one stress event observable in the historical window.
 
 Twelve rolling months: May 2025 through May 2026. This window contains:
 
-- The KelpDAO collateral exploit and ensuing migration of Total Value
-  Locked (April 2026), used as the **primary calibration anchor**;
+- The April 2026 rsETH incident, used as context for the primary
+  stylised stress fixture; no destination-specific migration claim is made;
 - A series of oracle deviations and minor depegs (continuous, low
   intensity);
 - Sector-wide macro stress around the third quarter of 2025 (to
@@ -323,7 +328,7 @@ Summary:
 | **S2** | Utilisation spike | Sudden borrow demand pushes utilisation toward 1 | Spike calibrated on the top-three historical events |
 | **S3** | Oracle deviation | Collateral price drops by $\Delta$ in $\Delta t$; oracle reports lagged price | $\Delta$ at the 99th-percentile of historical drawdowns over $\Delta t$ |
 | **S4** | Liquidation cascade | Combination: oracle drop with liquidations and decentralised-exchange slippage feedback | All three at the 95th-percentile jointly |
-| **S5** | KelpDAO replay | Backtest of the April 2026 event applied to current Morpho markets ex-post | Empirical, no parameter |
+| **S5** | rsETH incident-inspired path | Stylised stress fixture applied to a representative Morpho market | Retained fixture; not an exact replay |
 
 ### 3.5 Output metrics
 

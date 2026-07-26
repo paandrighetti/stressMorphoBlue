@@ -1,13 +1,14 @@
 {
   "engine": "v1.1",
-  "alpha_star_median": 0.10697653665402401,
+  "methodology_revision": "rolling-window-v2",
+  "alpha_star_median": 0.10697653665402398,
   "alpha_star_min": 0.010220921732023389,
   "markets_evaluated": 24,
   "markets_excluded": [
     {
       "market_id": "0x3274643db77a064abd3bc851de77556a4ad2e2f502f4f0c80845fa8f909ecf0b",
       "market": "sUSDS/USDT",
-      "reason": "no slippage curve (unusable quotes (7/7 positive-bps rows))"
+      "reason": "no slippage curve (insufficient slippage observations: 7 usable, 8 required)"
     },
     {
       "market_id": "0x23a7d0ff682b323363fb8ba58327ed87001f6306e09b7fd7413bbe4698e749c8",
@@ -16,8 +17,8 @@
     }
   ],
   "tiers": {
-    "red": 9,
     "yellow": 14,
+    "red": 9,
     "green": 1
   },
   "extreme_failures": 20,
@@ -25,8 +26,14 @@
   "extreme_insolvency_failures": 0,
   "extreme_fail_tvl_share_pct": 94.21410133322816,
   "extreme_params": {
-    "drawdown": 0.25,
-    "alpha": 0.35
+    "nominal_drawdown_cap": 0.25,
+    "outflow_alpha": 0.35,
+    "correlated_pair_policy": "when the worst measured 24h drawdown is below 3%, use the minimum of the nominal cap and max(5%, 3x measured worst)",
+    "per_market_drawdown_column": "extreme_drawdown_used"
+  },
+  "data_quality": {
+    "synthetic_drawdown_markets": [],
+    "publication_requires_measured_drawdowns": true
   },
   "n_paths": 200
 }

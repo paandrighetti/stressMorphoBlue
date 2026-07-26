@@ -3,8 +3,10 @@
 This script writes hourly oracle and market price series for each event,
 calibrated to publicly-documented event characteristics:
 
-- KelpDAO 2026-04-20: rsETH ~25% drop over ~4h around 14:00 UTC, partial
-  recovery to ~88% of pre-event price by end of window.
+- rsETH incident-inspired fixture: a modelled ~25% drop over ~4h around
+  20 April 2026 14:00 UTC, with partial recovery to ~88% of the pre-shock
+  price. The incident was disclosed on 18 April; this timestamp is a modelling
+  choice and the path is not an exact replay.
 - USDC depeg 2023-03-11: USDC trades 0.97 → 0.88 → 0.94 over ~24h around the
   SVB news cycle. Oracle (Chainlink) lags; Curve / Uniswap reflect spot.
 - stETH discount 2022-05-12: stETH/ETH ratio 0.99 → 0.94 over 5 days as
@@ -15,7 +17,7 @@ documented shape of each event, with hourly cadence and noise level matching
 historical observations.
 
 References:
-- KelpDAO: rekt.news, Aave governance post-mortem
+- rsETH incident: Aave governance incident and incident-report threads
 - USDC depeg: Circle blog 2023-03-11, CoinGecko historical USDC/USD
 - stETH discount: Curve.fi historical pool composition, Lido blog
 
@@ -45,7 +47,7 @@ def _hourly_range(start: datetime, end: datetime) -> list[datetime]:
 
 
 def kelpdao_prices() -> pd.DataFrame:
-    """rsETH price path: ~25% drop over 4h on 2026-04-20 ~14:00 UTC."""
+    """Stylised rsETH path: ~25% modelled drop over 4h on 20 April."""
     start = datetime(2026, 4, 15, 0, 0, tzinfo=timezone.utc)
     end = datetime(2026, 4, 25, 0, 0, tzinfo=timezone.utc)
     timestamps = _hourly_range(start, end)

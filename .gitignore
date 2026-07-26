@@ -29,7 +29,6 @@ ENV/
 
 # Package managers
 poetry.lock
-uv.lock
 Pipfile.lock
 
 # Tests / coverage
