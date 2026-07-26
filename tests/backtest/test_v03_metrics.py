@@ -105,7 +105,7 @@ def test_fit_missing_asset() -> None:
 
 
 # ---------------------------------------------------------------------------
-# liquidity_metrics — position_recovery_value
+# liquidity_metrics, position_recovery_value
 # ---------------------------------------------------------------------------
 
 
@@ -177,7 +177,7 @@ def test_recovery_collateral_exhaustion_creates_bad_debt() -> None:
 
 
 # ---------------------------------------------------------------------------
-# liquidity_metrics — hqla_v03
+# liquidity_metrics, hqla_v03
 # ---------------------------------------------------------------------------
 
 
@@ -191,7 +191,7 @@ def test_hqla_no_positions_equals_l1() -> None:
 
 
 def test_hqla_l2a_bounded_by_total_borrow() -> None:
-    """L2A_net (recoverable) cannot exceed total_borrow_assets — sanity bound."""
+    """L2A_net (recoverable) cannot exceed total_borrow_assets, sanity bound."""
     state = make_market_state(utilization=0.85, oracle_price=2000)
     curve = SlippageCurve(asset_symbol="X", a=1e-5, b=0.4)
     _, l2a, _, _ = hqla_v03(state, market_price=2000.0, slippage_curve=curve)
@@ -199,7 +199,7 @@ def test_hqla_l2a_bounded_by_total_borrow() -> None:
 
 
 # ---------------------------------------------------------------------------
-# liquidity_metrics — lcr_onchain_v03
+# liquidity_metrics, lcr_onchain_v03
 # ---------------------------------------------------------------------------
 
 

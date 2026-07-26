@@ -166,6 +166,20 @@ def _load_caches() -> dict[str, pd.DataFrame]:
     return frames
 
 
+
+def _usd_quoted_fail_share(df) -> float:
+    """Share of USD-quoted evaluated supply failing at least one extreme leg.
+
+    Markets whose loan asset is WETH are excluded rather than converted: the
+    evaluation outputs never assume an exchange rate.
+    """
+    usd = df[~df["market"].str.endswith("/WETH")]
+    total = usd["supply_assets"].sum()
+    if not total:
+        return 0.0
+    return float(usd.loc[usd["extreme_fail"], "supply_assets"].sum() / total * 100)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n-paths", type=int, default=200)
@@ -485,7 +499,12 @@ def main() -> None:
         "extreme_failures": int(df["extreme_fail"].sum()),
         "extreme_illiquidity_failures": int(df["extreme_illiq_fail"].sum()),
         "extreme_insolvency_failures": int(df["extreme_insolv_fail"].sum()),
-        "extreme_fail_tvl_share_pct": float(df.loc[df["extreme_fail"], "supply_assets"].sum() / tv * 100) if tv else 0.0,
+        # Supply is denominated in each market's own loan asset. Summing across
+        # USD-quoted and WETH-quoted markets would silently assume an exchange
+        # rate, so the published share covers the USD-quoted subset only and
+        # WETH-quoted markets are reported separately by
+        # scripts/generate_roster_table.py.
+        "extreme_fail_supply_share_usd_quoted_pct": _usd_quoted_fail_share(df),
         "extreme_params": {
             "nominal_drawdown_cap": args.extreme_drawdown,
             "outflow_alpha": args.extreme_alpha,
@@ -513,7 +532,8 @@ def main() -> None:
           .to_string(index=False, float_format=lambda x: f"{x:,.2f}"))
     print(f"\nTiers: {summary['tiers']} | extreme: {summary['extreme_illiquidity_failures']} illiquidity fails, "
           f"{summary['extreme_insolvency_failures']} insolvency fails "
-          f"({summary['extreme_fail_tvl_share_pct']:.1f}% of evaluated supply fails at least one leg)")
+          f"({summary['extreme_fail_supply_share_usd_quoted_pct']:.1f}% of USD-quoted evaluated supply "
+          f"fails at least one leg; WETH-quoted markets reported separately)")
     for m, l, r in excluded:
         print(f"EXCLUDED {l}: {r}")
     print(f"\nWrote {args.out_csv} and {args.out_json}")

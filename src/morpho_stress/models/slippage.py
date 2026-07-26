@@ -1,4 +1,4 @@
-"""DEX slippage model — π(C, V).
+"""DEX slippage model, π(C, V).
 
 Slippage is the relative shortfall between the oracle-quoted price and the
 realized DEX execution price for selling `V` units of collateral `C`:
@@ -18,9 +18,9 @@ For v0 (mock data), we expose a `SlippageCurve` that can be:
     - fitted from a `dex_slippage` Pandera-validated DataFrame (Phase 4)
 
 References:
-    - Almgren-Chriss (2000), "Optimal Execution of Portfolio Transactions" —
+    - Almgren-Chriss (2000), "Optimal Execution of Portfolio Transactions",
       power-law impact has its origins in the equity microstructure literature.
-    - Frazzini, Israel, Moskowitz (2018), "Trading Costs" — empirical b ≈ 0.6
+    - Frazzini, Israel, Moskowitz (2018), "Trading Costs", empirical b ≈ 0.6
       across asset classes.
 """
 
@@ -48,7 +48,7 @@ class SlippageCurve:
     asset_symbol: str
     a: float
     b: float
-    max_slippage: float = 0.5  # 50% — beyond this, position is effectively unliquidatable
+    max_slippage: float = 0.5  # 50%, beyond this, position is effectively unliquidatable
     min_volume_native: float = 0.0
 
     def slippage(self, volume_native: float) -> float:
@@ -72,7 +72,7 @@ def fit_curve(
 
     Expected columns (subset of `dex_slippage` schema):
         volume_native: float, > 0
-        slippage_bps: float, can be negative (positive surprises) — clipped to ≥ 1 bp
+        slippage_bps: float, can be negative (positive surprises), clipped to ≥ 1 bp
 
     The fit is OLS on log(π) vs log(V):
         log(π) = log(a) + b · log(V) + ε
@@ -113,7 +113,7 @@ def fit_curve(
     if a <= 0:
         raise ValueError(f"non-positive scale parameter a={a} for {asset_symbol}")
     if not (0.1 <= b <= 1.5):
-        # Warn but accept — empirical b across assets ranges
+        # Warn but accept, empirical b across assets ranges
         # We do not raise; downstream tests can flag implausible curves
         pass
 

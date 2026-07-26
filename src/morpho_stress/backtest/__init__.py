@@ -1,4 +1,4 @@
-"""Backtest framework — historical event validation per docs/BACKTEST.md."""
+"""Backtest framework, historical event validation per docs/BACKTEST.md."""
 
 from morpho_stress.backtest.fixtures import (
     EventFixture,

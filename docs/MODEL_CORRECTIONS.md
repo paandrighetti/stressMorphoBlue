@@ -22,20 +22,6 @@ WAD/Taylor fixed-point; fee-recipient supply shares aggregated; close factor 1
 per position with a batch-level keeper strike instead of a partial-fill search;
 no mempool latency.
 
-## Historical release checklist
-
-The following release checklist is retained verbatim for methodological provenance.
-Its imperative wording records the original release process and does not represent
-pending publication work.
-1. Re-fetch the market snapshot (26 markets) with the pipeline scripts.
-2. Regenerate REPORT.md tables, README headline block and the Mirror article
-   figures with the v1.1 engine.
-3. Update the Dune dashboard queries/numbers where they mirror engine outputs.
-4. Re-check the three historical event fixtures: flags may legitimately change
-   under C5/C6 (both corrected biases were optimistic); report the v1.1 labels.
-5. Add differential tests against Morpho.sol and AdaptiveCurveIrm.sol
-   behaviour on recorded mainnet transactions (backlog).
-
 ## Evaluation-chain changes (beyond the engine)
 
 Alongside C1 to C7, the v1.1 evaluation chain replaced two v1.0 inputs

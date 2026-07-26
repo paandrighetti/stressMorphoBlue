@@ -1,4 +1,4 @@
-"""Scenario S1 — Withdrawal Run.
+"""Scenario S1, Withdrawal Run.
 
 Spec: `docs/SCENARIOS.md §3, S1`.
 

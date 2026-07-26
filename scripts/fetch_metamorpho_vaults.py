@@ -258,7 +258,7 @@ def main(top_n: int, profiles_path: str, output: str) -> None:
     # Pretty-print the panorama
     print()
     print("=" * 110)
-    print("METAMORPHO VAULT CURATOR DISCIPLINE — RANKED BY TVL")
+    print("METAMORPHO VAULT CURATOR DISCIPLINE, RANKED BY TVL")
     print("=" * 110)
     print(
         f"{'vault (asset)':<38} {'TVL ($M)':>10} {'#alloc':>7} "

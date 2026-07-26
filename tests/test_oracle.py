@@ -1,4 +1,4 @@
-"""Tests for oracle models — exogenous + Uniswap-V3 geometric TWAP."""
+"""Tests for oracle models, exogenous + Uniswap-V3 geometric TWAP."""
 
 from __future__ import annotations
 

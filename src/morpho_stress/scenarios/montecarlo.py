@@ -6,15 +6,15 @@ empirical distribution (Monte Carlo mode).
 
 This module provides:
 
-1. ``EmpiricalDistribution`` — a wrapper around an array of historical
+1. ``EmpiricalDistribution``, a wrapper around an array of historical
    observations supporting bootstrap sampling. Block bootstrap is provided
    for autocorrelated series.
 
-2. ``MonteCarloRunner`` — runs ``n_paths`` simulations of a scenario, each
+2. ``MonteCarloRunner``, runs ``n_paths`` simulations of a scenario, each
    with a fresh sample from an empirical distribution, and aggregates output
    metrics into ``McResult``.
 
-3. ``McResult`` — distributional summary of metrics across paths.
+3. ``McResult``, distributional summary of metrics across paths.
 
 Design notes:
 

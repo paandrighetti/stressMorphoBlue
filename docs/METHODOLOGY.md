@@ -155,10 +155,10 @@ The mapping from Basel definitions to Morpho Blue analogues is:
 |---|---|---|
 | HQLA Level 1 (haircut 0%) | Cash, central-bank reserves, top sovereign debt | Instant liquidity $L_1 = S - B$ |
 | HQLA Level 2A (haircut 15%) | Highly liquid corporate or covered bonds | Per-position liquidation recovery, capped at debt and discounted by stress slippage (see §2.2) |
-| HQLA Level 2B (haircut 25–50%) | Lower-rated corporate or equity | Collateral with limited decentralised-exchange liquidity (exotic liquid-restaking-tokens, real-world-asset tokens), with slippage drawn from the upper tail of the empirical distribution |
+| HQLA Level 2B (haircut 25-50%) | Lower-rated corporate or equity | Collateral with limited decentralised-exchange liquidity (exotic liquid-restaking-tokens, real-world-asset tokens), with slippage drawn from the upper tail of the empirical distribution |
 | Outflows: stable retail (5%) | Insured retail deposits | Approximated by the median historical withdrawal velocity |
 | Outflows: less-stable retail (10%) | Non-insured retail deposits | Approximated by the 90th-percentile historical withdrawal velocity |
-| Outflows: wholesale unsecured (40–100%) | Non-financial or financial-corporate funding | Whale concentration: simultaneous withdrawal by the top-five suppliers under stress |
+| Outflows: wholesale unsecured (40-100%) | Non-financial or financial-corporate funding | Whale concentration: simultaneous withdrawal by the top-five suppliers under stress |
 | Inflows: secured lending (cap 75%) | Repayments and collateral inflows | Forced repayments from liquidations during the stress window |
 
 ### 2.2 Per-position liquidation recovery (the on-chain Level 2A)

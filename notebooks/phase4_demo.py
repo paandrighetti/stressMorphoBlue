@@ -1,4 +1,4 @@
-"""Phase 4 demo — backtest the framework against 3 historical events.
+"""Phase 4 demo, backtest the framework against 3 historical events.
 
 Runs the §6.1 validation criteria on each event fixture and reports the
 composite verdict.
@@ -46,7 +46,7 @@ def main() -> None:
     event_ids = list_fixtures(fixtures_root)
 
     print("=" * 90)
-    print("Phase 4 — Backtest validation against historical events")
+    print("Phase 4, Backtest validation against historical events")
     print("=" * 90)
     print(f"Events found: {event_ids}")
     print()

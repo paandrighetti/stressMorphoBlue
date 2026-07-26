@@ -1,4 +1,4 @@
-"""Liquidity metrics — LCR_onchain v0.3 and event-calibrated TTI.
+"""Liquidity metrics, LCR_onchain v0.3 and event-calibrated TTI.
 
 This module replaces the v0.2 LCR formulation in `runner.py` which produced
 LCR ≈ 4 across all events (insufficient discrimination). The diagnosis from
@@ -76,7 +76,7 @@ def position_recovery_value(
         slippage_curve: π(V) for this collateral
 
     Returns:
-        (recovery, bad_debt) — both denominated in loan asset
+        (recovery, bad_debt), both denominated in loan asset
     """
     if borrow_assets < EPS:
         return 0.0, 0.0
@@ -117,7 +117,7 @@ def hqla_v03(
 
     L1 = total_supply_assets - total_borrow_assets (instant liquidity).
 
-    L_net = Σᵢ recoveryᵢ(stress) — that is, only what the liquidation
+    L_net = Σᵢ recoveryᵢ(stress), that is, only what the liquidation
     process can actually deliver to the pool, net of slippage and capped at
     each position's debt.
 

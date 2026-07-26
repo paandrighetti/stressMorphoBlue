@@ -210,7 +210,7 @@ Each module is a standalone, idempotent Python script under
 | Events | `scripts/fetch_events.py` | Subgraph paginated |
 | Oracle prices | `scripts/fetch_oracle_prices.py` | RPC `latestRoundData` per block sample |
 | Decentralised-exchange slippage (forward) | `scripts/fetch_uniswap_quotes.py`, `scripts/fetch_agg_quotes.py`, `scripts/pendle_csv_to_slippage.py` | Uniswap V3 quoter; CoW Protocol and KyberSwap keyless quote endpoints; Pendle hosted API |
-| Decentralised-exchange slippage (historical) | `scripts/fetch_uniswap_swaps.py` | Uniswap V3 subgraph |
+| Decentralised-exchange slippage (historical) | `scripts/fetch_uniswap_quotes.py` | Uniswap V3 subgraph |
 | Total Value Locked | `scripts/fetch_tvl.py` | DeFiLlama application programming interface |
 
 ### 4.1 Idempotence rule
@@ -393,7 +393,7 @@ Secrets via environment variables only, never committed.
 | `fetch_events.py` | 2 hours of development plus 30 minutes of compute | Subgraph paginated, approximately 10,000 to 30,000 events per market |
 | `fetch_oracle_prices.py` | 2 hours of development plus 2 hours of compute | Approximately 9,000 RPC calls per market |
 | `fetch_uniswap_quotes.py` + `fetch_agg_quotes.py` | keyless venues; no registration required (the 1inch path was abandoned: mandatory registration) |
-| `fetch_uniswap_swaps.py` | 1 hour of development plus 30 minutes of compute | Subgraph |
+| `fetch_uniswap_quotes.py` | 1 hour of development plus 30 minutes of compute | Subgraph |
 | `fetch_tvl.py` | 30 minutes | DeFiLlama free |
 | Validation suite | 2 hours |, |
 | **Total** | **Approximately 14 to 16 hours** | Within Alchemy's free tier |

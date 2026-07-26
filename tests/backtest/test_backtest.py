@@ -1,4 +1,4 @@
-"""Tests for the backtest module — fixtures, runner, validation criteria."""
+"""Tests for the backtest module, fixtures, runner, validation criteria."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def test_load_kelpdao_fixture() -> None:
 def test_load_usdc_fixture() -> None:
     fixture = load_event(FIXTURES_ROOT / "usdc_depeg_2023_03")
     assert fixture.meta.counterfactual is True
-    # USDC oracle was sticky — price at snapshot = 1.0
+    # USDC oracle was sticky, price at snapshot = 1.0
     assert fixture.initial_state.oracle_price == 1.000
     # Verify market price drops to ~0.88 in the window
     assert fixture.market_path.min() < 0.92

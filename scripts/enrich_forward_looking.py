@@ -787,7 +787,7 @@ def main(cache_dir: str, output_path: str, evaluate: bool, extreme: bool, horizo
 
         print()
         print("=" * sep_width)
-        print("FORWARD-LOOKING RISK PANORAMA — Morpho Blue (top markets)")
+        print("FORWARD-LOOKING RISK PANORAMA, Morpho Blue (top markets)")
         print("=" * sep_width)
 
         for tier in TIER_ORDER:
@@ -879,7 +879,7 @@ def main(cache_dir: str, output_path: str, evaluate: bool, extreme: bool, horizo
         print()
         print("=" * ext_sep_width)
         print(
-            f"EXTREME STRESS TEST — drawdown={EXTREME_DRAWDOWN:.0%}, "
+            f"EXTREME STRESS TEST, drawdown={EXTREME_DRAWDOWN:.0%}, "
             f"alpha={EXTREME_ALPHA:.0%} (KelpDAO 2026 + USDC depeg 2023 hybrid)"
         )
         print("=" * ext_sep_width)

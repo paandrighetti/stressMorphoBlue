@@ -1,4 +1,4 @@
-"""Phase 3.5 demo — Adaptive IRM + Geometric TWAP + S3 + Monte Carlo.
+"""Phase 3.5 demo, Adaptive IRM + Geometric TWAP + S3 + Monte Carlo.
 
 Runs the full Phase 3.5 stack on synthetic data:
 
@@ -50,7 +50,7 @@ curve = SlippageCurve(asset_symbol="WETH", a=3e-4, b=0.58, max_slippage=0.5)
 
 
 print("=" * 80)
-print("Phase 3.5 demo — Morpho Blue liquidity stress")
+print("Phase 3.5 demo, Morpho Blue liquidity stress")
 print("=" * 80)
 print()
 print("Initial state:")
@@ -64,7 +64,7 @@ print()
 
 # ----- 2. Point-mode S3 across drawdown levels -----
 print("=" * 80)
-print("S3 — Oracle deviation, point mode (6h drawdown, 24h horizon)")
+print("S3, Oracle deviation, point mode (6h drawdown, 24h horizon)")
 print("=" * 90)
 print(f"{'drawdown':>10} {'n_liq':>7} {'cascade':>9} {'bad_debt':>14} {'slip_short':>14}")
 print("-" * 80)
@@ -86,14 +86,14 @@ for shape in ["linear", "instant"]:
 # ----- 3. Monte Carlo over empirical drawdown distribution -----
 print()
 print("=" * 80)
-print("S3 — Monte Carlo over empirical drawdown distribution (instant shock, n=200)")
+print("S3, Monte Carlo over empirical drawdown distribution (instant shock, n=200)")
 print("=" * 80)
 
 # Synthesize an empirical distribution of 24h drawdowns for WETH.
 # Heavy-tailed: most days small, occasional big shock. Beta-like with rare spikes.
 rng = np.random.default_rng(42)
-small_drawdowns = rng.beta(2, 30, 350) * 0.10        # bulk: 0–6%
-medium_drawdowns = rng.beta(2, 5, 100) * 0.20        # tail: 0–20%
+small_drawdowns = rng.beta(2, 30, 350) * 0.10        # bulk: 0-6%
+medium_drawdowns = rng.beta(2, 5, 100) * 0.20        # tail: 0-20%
 large_drawdowns = np.array([0.18, 0.22, 0.25, 0.28, 0.32, 0.35, 0.40])  # historical extremes
 all_drawdowns = np.concatenate([small_drawdowns, medium_drawdowns, large_drawdowns])
 

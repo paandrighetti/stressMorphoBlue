@@ -1,4 +1,4 @@
-"""Utility modules — mock data generators, helpers."""
+"""Utility modules, mock data generators, helpers."""
 
 from morpho_stress.utils.mock import (
     make_dex_slippage_observations,

@@ -1,4 +1,4 @@
-"""Phase 3 demo — end-to-end stress test on synthetic data.
+"""Phase 3 demo, end-to-end stress test on synthetic data.
 
 Run as a script:
     PYTHONPATH=src python notebooks/phase3_demo.py
@@ -91,7 +91,7 @@ print(f"  π(10000 WETH):    {curve.slippage(10000.0):.2%}")
 # ----- 3. Scenario S1: withdrawal run at three severities -----
 print()
 print("=" * 70)
-print("Scenario S1 — Withdrawal Run")
+print("Scenario S1, Withdrawal Run")
 print("=" * 70)
 print(f"{'alpha':>8} {'duration':>10} {'horizon':>10} {'queued (USD)':>20} {'TTI (blocks)':>15}")
 print("-" * 70)
@@ -143,7 +143,7 @@ for drop_pct in [0.05, 0.10, 0.15, 0.20, 0.30]:
 # ----- 5. Headline summary -----
 print()
 print("=" * 70)
-print("Demo completed — Phase 3 pipeline functional on mock data")
+print("Demo completed, Phase 3 pipeline functional on mock data")
 print("=" * 70)
 print()
 print("Next: Phase 4 = backtest framework against historical events")

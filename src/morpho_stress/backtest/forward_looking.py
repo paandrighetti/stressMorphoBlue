@@ -267,7 +267,7 @@ def assess_market(
 
     alpha = calibrated_outflow_alpha(path)
 
-    # 1. LCR v0.3 — using drawdown_p99 as the stress price
+    # 1. LCR v0.3, using drawdown_p99 as the stress price
     worst_price = profile.oracle_price * (1.0 - profile.drawdown_p99)
     lcr, comp = lcr_onchain_v03(
         state=state, market_price=worst_price, slippage_curve=curve, outflow_alpha=alpha

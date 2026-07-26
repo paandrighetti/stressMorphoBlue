@@ -198,7 +198,13 @@ mid-size decentralised-finance lending markets tend to exit at the
 first sign of stress, contributing a near-instantaneous 30% withdrawal
 of total supply.
 
-### 2.2 Three pass-or-fail criteria
+### 2.2 Three pass-or-fail criteria (backtest layer only)
+
+> These three criteria govern the **backtest layer** of section 3 and are the
+> ones the fixtures are scored against. They are **not** the publication tiering
+> of the forward-looking panorama, which ranks markets on the survival frontier
+> alpha\* at 10% and 30% of supply (section 4.4). The v1.0 four-tier scheme,
+> including the green-strong and green-watch labels, is retired.
 
 A market is flagged as stressed if any of three criteria is triggered.
 Each criterion captures a distinct risk channel.
@@ -271,15 +277,22 @@ oracle), seeded with the actual price path of the event.
 
 ### 3.2 Results
 
-| Event | Liquidity Coverage Ratio | $\alpha$ | Time-to-illiquid | Probability bad debt > 0 | Severity | Verdict |
+<!-- BEGIN GENERATED: backtest_results -->
+| Event | On-chain Liquidity Coverage Ratio | alpha | Time-to-illiquid | Probability bad debt > 0 | Severity | Verdict |
 |---|---|---|---|---|---|---|
-| KelpDAO 2026 | 8.30 (green) | 60% | < 6h (red) | high (red) | **red** | **PASS** |
-| USDC depeg 2023 | 8.30 (green) | 48% | 6.6h (red) | 0% (green) | **red** | **PASS** |
-| Staked-Ether 2022 | 80.0 (green) | 5% (floor) | infinite (green) | 0% (green) | **green** | **FAIL** |
+| rsETH incident-inspired fixture (2026) | 0.26 (red) | 60% | 6.2h (red) | 0% (green) | **red** | **PASS** |
+| USDC depeg (2023) | 0.28 (red) | 48% | 6.6h (red) | 0% (green) | **red** | **PASS** |
+| Staked-Ether discount (2022) | 3.20 (green) | 5% | infinite (green) | 0% (green) | **green** | **FAIL** |
+
+Aggregate: **2 of 3 events flagged** by the pre-specified criteria. Values are produced by `scripts/generate_backtest_table.py`, which runs the same engine and the same slippage curves as `notebooks/phase4_demo.py`. Severity labels are the engine's own, not editorial.
+<!-- END GENERATED: backtest_results -->
 
 **The rsETH incident-inspired fixture and the USDC depeg fixture are flagged before their modelled shocks** through
-the time-to-illiquid criterion at the event-calibrated $\alpha$. The
-bad-debt-probability criterion fires only on KelpDAO. This is
+the on-chain Liquidity Coverage Ratio and the time-to-illiquid criterion at the
+event-calibrated $\alpha$. The bad-debt-probability criterion fires on none of
+the three fixtures: under the contract-aligned engine the keeper-rationality
+gate suppresses execution before bad debt is booked, which is the regime the
+report describes in section 4.5. This is
 informative: the USDC oracle was *sticky* during the depeg (the
 Chainlink USDC-to-U.S.-dollar feed remained at $1.00$ for hours, while
 the secondary market traded at approximately $0.88$), so on-chain
@@ -323,18 +336,21 @@ markets on Ethereum mainnet**, ranked by Total Value Locked, with state
 extracted from the on-chain data acquisition pipeline described in
 [`docs/DATA.md`](./DATA.md). The roster is therefore not illustrative
 but reflects the live composition of the protocol as observed during
-the analysis window. Aggregate Total Value Locked across the roster is
-approximately 1.7 billion U.S. dollars.
+the analysis window.
 
-The roster spans five collateral asset classes:
+<!-- BEGIN GENERATED: report_roster -->
+The roster spans four collateral asset classes. Supplies are reported in the market's own loan asset: markets quoted in Wrapped Ether are listed separately and are not converted, so no exchange-rate assumption enters any figure below.
 
-- **Wrapped Bitcoin variants** (cbBTC, WBTC, LBTC), $635M total
-- **Liquid staking tokens** (wstETH, weETH), $570M total
-- **Synthetic stablecoins** (sUSDe, sUSDS, wsrUSD, syrupUSDC, AA_FalconXUSDC, sUSDat, stcUSD, msY, mF-ONE, stUSDS), $552M total
-- **Pendle principal tokens** (PT-apyUSD, PT-apxUSD, PT-reUSD), $52M total
-- **Yield-bearing wrappers** (sUSDe in different quote pairs), residual
+| Asset class | Markets | Supply, USD-quoted loan assets | Supply, WETH-quoted loan assets | Collaterals |
+|---|---:|---:|---:|---|
+| Wrapped Bitcoin | 5 | $510.0M | n/a | LBTC, WBTC, cbBTC |
+| Liquid staking tokens | 7 | $322.8M | 69,450 WETH | weETH, wstETH |
+| Yield-bearing and synthetic stables | 9 | $190.7M | n/a | AA_FalconXUSDC, mF-ONE, sUSDat, sUSDe, stUSDS, stcUSD, syrupUSDC, wsrUSD |
+| Pendle principal tokens | 3 | $4.0M | n/a | PT-apxUSD-18JUN2026, PT-apyUSD-18JUN2026, PT-reUSD-25JUN2026 |
+| **Total, 24 evaluated markets** | **24** | **$1.03B** | **69,450 WETH** | |
 
-Loan assets are dominated by USDC, USDT, PYUSD, and WETH.
+Loan assets across the roster are USDC, USDT, PYUSD, RLUSD, USDtb, AUSD and WETH. The two monitored markets excluded from evaluation are listed in the exclusions block of section 4.4 and contribute to none of the totals above.
+<!-- END GENERATED: report_roster -->
 
 ### 4.2 Methodology: decoupled stress scenarios
 
@@ -363,18 +379,26 @@ median, $\alpha$ amplified to the 20%-30% range observed during the
 KelpDAO 2026 episode (where roughly 17% of Aave's TVL exited in 24
 hours) and the USDC depeg of March 2023 (approximately 25% on day one).
 
-The reported `Liquidity Coverage Ratio` (column LCR_v03 in the table
-below) is the worst-of-two: $\min(\mathrm{LCR}_A, \mathrm{LCR}_B)$.
+The worst-of-two reading $\min(\mathrm{LCR}_A, \mathrm{LCR}_B)$ was the v0.3
+publication metric. It is retained here as design history: the v1.1 panorama in
+section 4.4 reports the survival frontier alpha\* instead, and no LCR_v03
+column appears in the generated tables.
 
 We additionally compute a **continuous LCR criterion**: the fraction
 of Monte Carlo paths in which $\mathrm{LCR} < 1$, denoted
 $\Pr(\mathrm{LCR} < 1)$. This is more aligned with stress-testing
 practice than a single threshold check.
 
-### 4.3 Severity criteria
+### 4.3 Severity criteria (v0.3, superseded)
 
-A market is `red` if **at least one** of the three components reaches
-red severity. The component thresholds are:
+> Retained for provenance. The v1.1 publication tiers on the survival frontier
+> alpha\* alone (red below 10%, yellow below 30%, green at or above 30% of
+> supply). The grid below, including the green-strong and green-watch
+> refinement, produced the archived v1.0 figures and is not applied to any
+> number in section 4.4.
+
+A market was `red` if **at least one** of the three components reached
+red severity. The component thresholds were:
 
 | Component | Red | Yellow | Green |
 |---|---|---|---|
@@ -512,8 +536,18 @@ solvent, and on current books that is exactly what happens.
 ### 4bis.3 Result
 
 See the extreme-scenario table in section 4.4 (generated block). The
-headline is the dichotomy itself: every evaluated market fails the
-liquidity leg while none fails the solvency leg.
+headline is the dichotomy itself: 20 of the 24 evaluated markets fail the
+liquidity leg while none fails the solvency leg. The four markets that pass
+the liquidity leg are the low-utilisation or deep-stablecoin cases visible in
+that table.
+
+One calibration caveat belongs here rather than in the limitations. The
+solvency leg fails above 10% of supply, and the largest latent insolvency
+measured on this snapshot is 0.69%. On this book the solvency leg cannot bind
+at any plausible threshold, so the dichotomy reported above is a statement
+about the current position book, not a demonstration that the two legs are
+equally discriminating. A book carrying materially higher average
+loan-to-value would be required to test the solvency leg at all.
 
 
 ## 4ter. MetaMorpho vault analysis (archived)
@@ -559,14 +593,12 @@ interpretability of the headline numbers, and decentralised-finance
 risk reporting often omits such caveats.
 
 1. **The bad-debt distribution has heavy tails on a small sample.**
-  Our Monte Carlo simulations use 50 to 200 paths drawn from a
-  fitted Beta empirical distribution. The 99th-percentile estimate
-  has wide confidence intervals; for the high-probability red-flag
-  market (PT-apyUSD-18JUN2026/USDC at 68.5%) the result is reliable to
-  sampling, but tail magnitudes for less-stressed markets are small
-  numbers dominated by sampling noise. Markets with very few active
-  positions (under 20) are particularly subject to small-sample
-  variance in the Beta-scaled position distribution.
+  The Monte Carlo layer uses 200 paths drawn from each market's own
+  empirical 24-hour drawdown distribution. The 99th-percentile estimate
+  carries wide confidence intervals, and tail magnitudes for
+  less-stressed markets are small numbers dominated by sampling noise.
+  Markets with few active positions are the most exposed to this, since
+  a single position dominates the tail.
 2. **Counterfactual events are weakly identified.** The USDC and
   staked-Ether events predate Morpho Blue. We synthesised position
   distributions for them, calibrated to plausible parameters of
@@ -594,10 +626,12 @@ risk reporting often omits such caveats.
   Statistical significance is not claimed; the two-of-three pass
   rate is illustrative of the framework's discrimination, not a
   frequentist guarantee.
-6. **The forward-looking market parameters are representative.** A
-  production deployment would replace these with live subgraph and
-  remote-procedure-call reads. The architecture for this is in
-  place; the parameters here are not authoritative.
+6. **The panorama is a single dated snapshot.** Market state, the position
+  book and exit-depth curves are read live for the block recorded in
+  section 4.4, not modelled. What the snapshot does not capture is time:
+  utilisation, depth and the position book all move, and no figure here
+  should be read as a current value. A production deployment would run the
+  same chain continuously rather than once.
 
 ---
 
@@ -630,11 +664,12 @@ historical input bytes.
 
 Key features:
 
-- **Versioned event fixtures** under `data/fixtures/<event-id>/` with
-  per-row source attribution, reproducible from the fixture
-  generation script.
-- **145 unit and property-based tests** with the `pytest` and
-  `hypothesis` libraries.
+- **Versioned event fixtures** under `data/fixtures/` (one directory per
+  event, each holding `event.yaml`, `market.json` and `prices.csv`), with
+  provenance recorded in the event metadata.
+- **Unit and property-based tests** with the `pytest` and `hypothesis`
+  libraries. The current count and status are reported by the GitHub Actions
+  badge at the top of the README rather than transcribed here.
 - **Demonstration notebooks** for each phase of the work, runnable
   with the command `PYTHONPATH=src python notebooks/phase{N}_demo.py`.
 - **Strict typed schemas** (using PyArrow and Pandera) gate every

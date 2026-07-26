@@ -1,4 +1,4 @@
-"""Phase 5 demo — full pipeline.
+"""Phase 5 demo, full pipeline.
 
 1. Re-run backtest with v0.3 framework (LCR refactored, alpha event-calibrated)
 2. Demonstrate slippage-curve fitting from synthetic Uniswap V3 swaps
@@ -50,7 +50,7 @@ def main() -> None:
     fixtures_root = ROOT / "data" / "fixtures"
 
     # =========================================================================
-    section("Phase 5 — v0.3 backtest validation")
+    section("Phase 5, v0.3 backtest validation")
     # =========================================================================
 
     verdicts = []

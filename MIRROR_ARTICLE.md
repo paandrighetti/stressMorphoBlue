@@ -4,7 +4,7 @@ Decentralised-finance lending protocols hold tens of billions of dollars of depo
 
 This work formalises the transposition for **Morpho Blue**, the non-custodial lending protocol with isolated markets and immutable parameters. We adapt the **Liquidity Coverage Ratio** defined by the Basel Committee on Banking Supervision in BCBS 238 (2013) and apply it to live on-chain data.
 
-The full source code, a 146-test suite, and reproducible event fixtures are open-source. The published 26-market selection and 24-market evaluation were computed from the dated mainnet snapshot identified below; current test status is reported by the repository's GitHub Actions workflow. A separate forward-looking module ships as an explicitly synthetic v0 demonstration and feeds none of the figures.
+The full source code, the automated test suite, and reproducible event fixtures are open-source. The published 26-market selection and 24-market evaluation were computed from the dated mainnet snapshot identified below; current test status is reported by the repository's GitHub Actions workflow. A separate forward-looking module (`scripts/enrich_forward_looking.py`) builds market profiles from cached data using heuristic position parameters. It is a demonstration path and feeds none of the figures below.
 
 ---
 
@@ -73,7 +73,7 @@ We treat known limits as data:
 git clone https://github.com/paandrighetti/stressMorphoBlue
 cd stressMorphoBlue && uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
-PYTHONPATH=src pytest tests/        # 146 tests, ~2 minutes
+PYTHONPATH=src pytest tests/        # full suite, a couple of minutes
 
 # regenerate publication tables from the committed evaluation outputs
 python scripts/generate_report_tables.py
@@ -84,7 +84,7 @@ python scripts/assemble_docs.py
 # committed-output publication rebuild
 python scripts/run_evaluation.py
 
-# optional synthetic forward-looking demonstration (not used in headline figures)
+# optional heuristic forward-looking demonstration (not used in headline figures)
 PYTHONPATH=src python scripts/enrich_forward_looking.py --evaluate --extreme
 ```
 

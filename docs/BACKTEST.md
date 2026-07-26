@@ -58,7 +58,7 @@ the 2022 to 2026 window. Each event is packaged as a versioned
   summary);
 - `prices.csv`, collateral price time series (oracle and market) for
   $\pm 5$ days around the event;
-- `markets.json`, affected market states at $t_0 - 1$ day (snapshot);
+- `market.json`, affected market state at $t_0 - 1$ day (snapshot);
 - `positions.csv`, borrower positions on those markets at $t_0 - 1$
   day;
 - `dex_slippage.csv`, Uniswap V3 historical swaps for slippage

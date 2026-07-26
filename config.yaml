@@ -1,4 +1,4 @@
-# config.yaml — TEMPLATE
+# config.yaml, TEMPLATE
 # Copy to config.local.yaml and fill in secrets via env vars.
 # config.local.yaml is gitignored.
 
@@ -14,7 +14,7 @@ morpho_blue:
   contract: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb"
 
 subgraph:
-  # Hosted Morpho Blue subgraph — confirm latest URL on
+  # Hosted Morpho Blue subgraph, confirm latest URL on
   # https://docs.morpho.org/morpho/tutorials/subgraph
   url: "https://api.thegraph.com/subgraphs/name/morpho-org/morpho-blue"
   api_key: "${GRAPH_API_KEY}"  # optional on hosted, required on decentralized network
@@ -33,6 +33,6 @@ range:
   start_ts: "2025-05-01T00:00:00Z"
   end_ts: "2026-05-01T00:00:00Z"
 
-# Top-3 markets — selected at Phase 2 day 1 by scripts/select_markets.py
+# Top-3 markets, selected at Phase 2 day 1 by scripts/select_markets.py
 # Frozen here as 32-byte market ids.
 markets: []

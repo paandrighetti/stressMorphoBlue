@@ -1,4 +1,4 @@
-"""Scenario S3 — Oracle Deviation.
+"""Scenario S3, Oracle Deviation.
 
 Spec: `docs/SCENARIOS.md §3, S3`.
 

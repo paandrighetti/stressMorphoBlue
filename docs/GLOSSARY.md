@@ -50,7 +50,7 @@ levels:
 - **Level 1**: cash, central-bank reserves, top-rated sovereign debt.
   Haircut: 0%.
 - **Level 2A**: highly liquid corporate or covered bonds. Haircut: 15%.
-- **Level 2B**: lower-rated corporate or equity. Haircut: 25–50%.
+- **Level 2B**: lower-rated corporate or equity. Haircut: 25-50%.
 
 The haircuts represent the assumed loss on monetisation under stress.
 Aggregate Level 2 cannot exceed 40% of total High Quality Liquid Assets.

@@ -20,10 +20,10 @@ firms are not public and may differ from what is described here.
 |---|---|---|---|---|---|
 | Regulatory anchor | BCBS 238 (LCR) explicit | Implicit | Implicit | Not stated | Not stated |
 | Stress model | Decoupled scenarios A/B + extreme + multi-day | Single scenario | Single scenario | Agent-based simulation | Agent-based simulation |
-| Position sampling | Beta-scaled OR empirical reconstruction | Empirical reconstruction | Empirical reconstruction | Empirical reconstruction | Empirical reconstruction |
+| Position sampling | Live onchain position book (Morpho API) | Empirical reconstruction | Empirical reconstruction | Empirical reconstruction | Empirical reconstruction |
 | Backtest validation | 3 historical events, 2/3 PASS | Not published | Not published | Not published | Not published |
-| Reproducibility | Open source, 145 tests passing | Internal only | Internal only | Internal only | Internal only |
-| Severity tiers | Red / yellow / green-watch / green-strong | Continuous score | Categorical (low/med/high) | Continuous risk-adjusted | Continuous risk-adjusted |
+| Reproducibility | Open source, suite green in continuous integration | Internal only | Internal only | Internal only | Internal only |
+| Severity tiers | Red / yellow / green on the survival frontier | Continuous score | Categorical (low/med/high) | Continuous risk-adjusted | Continuous risk-adjusted |
 | Calibration source | Historical events (KelpDAO 2026, USDC 2023, stETH 2022) | Multi-source proprietary | Multi-source proprietary | Agent simulations | Agent simulations |
 
 Three observations from this table:
@@ -182,10 +182,14 @@ combined with incumbent agent-based work, not replace it.
 
 ## 5. References for incumbent positions
 
-- LlamaRisk Forum: forum.llamarisk.com
-- Block Analitica: metamorpho.org/vaults (allocation dashboards)
-- Gauntlet Methodology: docs.gauntlet.network
-- ChaosLabs Methodology: chaoslabs.xyz/methodology
+- LlamaRisk: llamarisk.com/research, with posts archived from protocol
+  governance forums (Aave, Curve)
+- Block Analitica: blockanalitica.com, and vault whitelisting posts on
+  forum.morpho.org
+- Gauntlet: gauntlet.xyz/resources, in particular
+  "Gauntlet's Parameter Recommendation Methodology" and
+  "Methodology: New Asset Listings"
+- Chaos Labs: chaoslabs.xyz/posts and chaoslabs.xyz/resources
 
 We treat all incumbent positions as paraphrased from public sources;
 no quoted material is reproduced from these references.

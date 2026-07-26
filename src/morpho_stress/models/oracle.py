@@ -1,4 +1,4 @@
-"""Oracle price models — exogenous and Uniswap-V3-style geometric TWAP.
+"""Oracle price models, exogenous and Uniswap-V3-style geometric TWAP.
 
 Two regimes from `docs/SCENARIOS.md §2.3`:
 
@@ -109,7 +109,7 @@ class TwapOracle:
     accepts non-constant ``dt`` for general use.
 
     The geometric mean is the right average for prices because compounded
-    returns are additive in log-space — this is also why Uniswap V3 chose it.
+    returns are additive in log-space, this is also why Uniswap V3 chose it.
 
     Args:
         initial_price: bootstrapping price (window starts here).

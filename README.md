@@ -64,7 +64,7 @@ The work is calibrated on the KelpDAO collateral exploit of April
 ## Repository structure
 
 ```
-morpho-blue-liquidity-stress/
+stressMorphoBlue/
 ├── docs/
 │   ├── GLOSSARY.md          # Definitions of all specialised terms
 │   ├── METHODOLOGY.md       # Historical v0.3 design note and retained foundations
@@ -86,7 +86,14 @@ morpho-blue-liquidity-stress/
 │   ├── fetch_uniswap_quotes.py      # DEX slippage curves
 │   ├── fetch_tvl.py                 # Aggregate TVL
 │   ├── enrich_positions.py          # Reconstruct positions from events
-│   ├── enrich_forward_looking.py    # Build profiles + run evaluation
+│   ├── fetch_positions_api.py       # Live position book (Morpho API)
+│   ├── fetch_agg_quotes.py          # Exotic exit depth, keyless aggregators
+│   ├── run_evaluation.py            # v1.1 driver -> docs/evaluation_results.csv
+│   ├── generate_report_tables.py    # -> docs/_generated/*.md
+│   ├── generate_backtest_table.py   # -> docs/_generated/backtest_results.md
+│   ├── generate_roster_table.py     # -> docs/_generated/report_roster.md
+│   ├── assemble_docs.py             # Splices fragments into the documents
+│   ├── enrich_forward_looking.py    # Heuristic profiles, demonstration path
 │   ├── fetch_metamorpho_vaults.py   # MetaMorpho vaults (v1.0, archived analysis)
 │   └── diagnose_corner_cases.py     # Investigate edge-case markets
 ├── tests/                   # pytest suite
@@ -108,7 +115,7 @@ morpho-blue-liquidity-stress/
 | **5** | Version-0.3 framework, decoupled stress scenarios (price-stress and liquidity-stress), continuous LCR criterion, Beta-scaled position distribution, asset-class slippage and drawdown calibration, extreme stress test, forward-looking analysis on 26 live markets (superseded by v1.1; see docs/MODEL_CORRECTIONS.md) | Done |
 | **6** | v1.1: contract-aligned engine (C1-C7), live-position evaluation via the Morpho API, keyless multi-venue depth (Uniswap quoter, CoW Protocol, KyberSwap, Pendle router), survival-frontier panorama, generated-figures publication chain | Done |
 | **7** | Public deliverables (Dune dashboard, Mirror article, public-facing summary) | Done |
-| **8** | Empirical position-level reconstruction (`scripts/enrich_positions.py`), archived v1.0 MetaMorpho vault study (`docs/archive/metamorpho_v1.0.md`), corner case diagnostic (`scripts/diagnose_corner_cases.py`), multi-day NSFR-style horizon (`--horizon-days N`), benchmark vs incumbent frameworks (`docs/BENCHMARK.md`) | Done |
+| **8** | Multi-day horizon flag on the demonstration path (`--horizon-days N`), empirical position-level reconstruction (`scripts/enrich_positions.py`), archived v1.0 MetaMorpho vault study (`docs/archive/metamorpho_v1.0.md`), corner case diagnostic (`scripts/diagnose_corner_cases.py`), multi-day NSFR-style horizon (`--horizon-days N`), benchmark vs incumbent frameworks (`docs/BENCHMARK.md`) | Done |
 
 ---
 
@@ -132,8 +139,11 @@ uv pip install -e ".[dev]"
 # Run the complete automated test suite (runtime depends on the environment)
 PYTHONPATH=src pytest tests/ -v
 
-# Run the Phase-5 end-to-end demonstration
-PYTHONPATH=src python notebooks/phase5_demo.py
+# Rebuild the published tables from the committed evaluation outputs
+python scripts/generate_backtest_table.py
+python scripts/generate_roster_table.py
+python scripts/generate_report_tables.py
+python scripts/assemble_docs.py
 
 # Set up local configuration for data acquisition
 cp config.yaml config.local.yaml  # then edit to add secrets via environment variables

@@ -1,4 +1,4 @@
-"""Tests for scenario S3 — oracle deviation."""
+"""Tests for scenario S3, oracle deviation."""
 
 from __future__ import annotations
 
@@ -123,7 +123,7 @@ def test_s3_horizon_extends_drawdown(state, curve) -> None:
         e for e in traj.events if e["kind"] == "liquidation" and e["block"] > 10 + traj.states[0].block
     ]
     # Late events should be rare (only positions that became liquidatable
-    # via interest accrual — possible but small).
+    # via interest accrual, possible but small).
     assert len(late_events) <= 0.1 * max(1, len(early_events))
 
 

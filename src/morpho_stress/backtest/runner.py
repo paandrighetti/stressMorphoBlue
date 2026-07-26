@@ -1,4 +1,4 @@
-"""Backtest runner v0.3 — applies §6.1 validation criteria with event-calibrated parameters.
+"""Backtest runner v0.3, applies §6.1 validation criteria with event-calibrated parameters.
 
 v0.3 changes vs v0.2 (Phase 4):
 
@@ -292,7 +292,7 @@ def run_backtest(
 def format_verdict(v: BacktestVerdict) -> str:
     """Render a verdict as a human-readable summary."""
     lines = [
-        f"=== {v.event_id} — {v.event_name}",
+        f"=== {v.event_id}, {v.event_name}",
         f"    counterfactual: {v.counterfactual}    expected_red_flag: {v.expected_red_flag}",
         f"    framework_flagged: {v.framework_flagged}    severity: {v.severity_flag}    {v.pass_fail}",
         "    criteria:",

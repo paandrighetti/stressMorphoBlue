@@ -1,4 +1,4 @@
-"""Numerical models — IRM, oracle, slippage."""
+"""Numerical models, IRM, oracle, slippage."""
 
 from morpho_stress.models.constants import BLOCK_TIME_SEC, EPS, SECONDS_PER_YEAR
 from morpho_stress.models.irm import IrmParams, accrue, borrow_rate, supply_rate

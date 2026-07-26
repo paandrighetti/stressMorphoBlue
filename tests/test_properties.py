@@ -6,16 +6,16 @@ parameter space rather than picked examples.
 
 Targets:
 
-1. **IRM borrow_rate** — monotonic in U, equals rate_at_target at U_target,
+1. **IRM borrow_rate**, monotonic in U, equals rate_at_target at U_target,
    continuous everywhere
-2. **IRM update_rate_at_target** — clipped to bounds, sign of change matches
+2. **IRM update_rate_at_target**, clipped to bounds, sign of change matches
    sign of (U - U_target)
-3. **TWAP** — geomean property: TWAP of [p1, p2] with equal weights ≈ sqrt(p1*p2)
-4. **Slippage curve** — monotonic in volume, capped at max_slippage
-5. **S1 invariants** — non-negative supply/borrow, total supply non-increasing
+3. **TWAP**, geomean property: TWAP of [p1, p2] with equal weights ≈ sqrt(p1*p2)
+4. **Slippage curve**, monotonic in volume, capped at max_slippage
+5. **S1 invariants**, non-negative supply/borrow, total supply non-increasing
    under net withdrawals
-6. **S3 invariants** — bad debt monotonic in drawdown
-7. **Liquidation** — bad debt + realized = repaid
+6. **S3 invariants**, bad debt monotonic in drawdown
+7. **Liquidation**, bad debt + realized = repaid
 """
 
 from __future__ import annotations

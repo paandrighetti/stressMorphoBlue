@@ -120,7 +120,7 @@ def test_borrow_rate_continuity_at_kink(u: float) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Adaptive layer — rate_at_target evolution
+# Adaptive layer, rate_at_target evolution
 # ---------------------------------------------------------------------------
 
 from morpho_stress.models.irm import update_rate_at_target  # noqa: E402
@@ -150,7 +150,7 @@ def test_update_at_target_below_target_decreases_rate() -> None:
 def test_update_at_target_clipped_at_max() -> None:
     """Sustained high utilization must not push rate above max."""
     params = IrmParams(max_rate_at_target=0.5)
-    # Strong overshoot, very long Δt — rate should be clipped
+    # Strong overshoot, very long Δt, rate should be clipped
     new_rat = update_rate_at_target(
         0.45, utilization=1.0, params=params, elapsed_seconds=365 * 24 * 3600
     )

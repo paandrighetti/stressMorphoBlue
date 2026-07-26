@@ -135,7 +135,7 @@ def synthesize_uniswap_swaps(
 
     Calibrated to public pool statistics:
         - pool_size_usd: TVL in the pool (used to derive scale of `a`)
-        - fee_tier_bps: 5 / 30 / 100 — affects baseline slippage
+        - fee_tier_bps: 5 / 30 / 100, affects baseline slippage
         - base_b: empirical Almgren-Chriss exponent (~0.55 for liquid crypto)
 
     The returned DataFrame matches the `dex_slippage` schema and can be fed

@@ -1,4 +1,4 @@
-"""Market state representation — the formal state vector x(M, t).
+"""Market state representation, the formal state vector x(M, t).
 
 Implementation of the notation from `docs/SCENARIOS.md §1`. The `MarketState`
 dataclass is the single in-memory representation passed through the simulation
@@ -61,7 +61,7 @@ class MarketParams:
     lltv: float
     fee: float
 
-    # IRM parameters (AdaptiveCurveIRM defaults — see Morpho Labs spec)
+    # IRM parameters (AdaptiveCurveIRM defaults, see Morpho Labs spec)
     irm_target_utilization: float = 0.9
     irm_curve_steepness: float = 4.0
     irm_adjustment_speed: float = 50.0  # per year

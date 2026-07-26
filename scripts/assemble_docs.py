@@ -20,6 +20,8 @@ from pathlib import Path
 
 TARGETS = [
     ("docs/REPORT.md", "report_results"),
+    ("docs/REPORT.md", "backtest_results"),
+    ("docs/REPORT.md", "report_roster"),
     ("README.md", "readme_block"),
     ("MIRROR_ARTICLE.md", "mirror_findings"),
 ]

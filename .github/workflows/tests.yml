@@ -65,6 +65,8 @@ jobs:
 
       - name: Regenerate publication
         run: |
+          python scripts/generate_backtest_table.py
+          python scripts/generate_roster_table.py
           python scripts/generate_report_tables.py
           python scripts/assemble_docs.py
 
@@ -76,4 +78,6 @@ jobs:
             docs/REPORT.md \
             docs/_generated/report_results.md \
             docs/_generated/readme_block.md \
-            docs/_generated/mirror_findings.md
+            docs/_generated/mirror_findings.md \
+            docs/_generated/backtest_results.md \
+            docs/_generated/report_roster.md

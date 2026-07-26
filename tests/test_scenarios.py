@@ -1,4 +1,4 @@
-"""Tests for stress scenarios — state invariants, S1 behavior, liquidations."""
+"""Tests for stress scenarios, state invariants, S1 behavior, liquidations."""
 
 from __future__ import annotations
 
@@ -115,7 +115,7 @@ def test_liquidate_with_zero_slippage_no_bad_debt_for_healthy_seize() -> None:
 
 
 # ---------------------------------------------------------------------------
-# S1 — withdrawal run
+# S1, withdrawal run
 # ---------------------------------------------------------------------------
 
 

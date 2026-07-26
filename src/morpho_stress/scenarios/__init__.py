@@ -1,4 +1,4 @@
-"""Stress scenarios — formal implementation of `docs/SCENARIOS.md §3`.
+"""Stress scenarios, formal implementation of `docs/SCENARIOS.md §3`.
 
 Each scenario module exposes:
     - a Pydantic-or-dataclass Config type
