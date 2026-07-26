@@ -222,7 +222,7 @@ def main(config_path: str, markets_path: str, state_path: str,
                     raise click.ClickException(
                         f"marketPositions query failed on {label}: {exc}\n"
                         f"Available fields per the live schema:\n  {diag}\n"
-                        f"Paste this output back to adapt POSITIONS_QUERY."
+                        f"Use this output to adapt POSITIONS_QUERY."
                     ) from exc
 
                 # _post returns body["data"] already unwrapped: no second unwrap

@@ -34,6 +34,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
+      - name: Reject tracked generated Python artifacts
+        run: |
+          if git ls-files | grep -E '(^|/)(__pycache__/|.*\.py[co]$)'; then
+            echo "Tracked Python cache artifacts are not allowed."
+            exit 1
+          fi
+
       - name: Run tests
         run: python -m pytest -q
 

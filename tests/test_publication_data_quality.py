@@ -26,3 +26,16 @@ def test_committed_evaluation_outputs_agree() -> None:
     expected = {str(key): int(value) for key, value in summary["tiers"].items()}
     assert observed == expected
     assert len(frame) == int(summary["markets_evaluated"])
+
+
+def test_publication_uses_current_methodology_revision() -> None:
+    summary = json.loads(
+        Path("docs/evaluation_summary.json").read_text(encoding="utf-8")
+    )
+    manifest = json.loads(
+        Path("docs/evaluation_manifest.json").read_text(encoding="utf-8")
+    )
+
+    expected = "rolling-window-v2"
+    assert summary.get("methodology_revision") == expected
+    assert manifest.get("methodology_revision") == expected

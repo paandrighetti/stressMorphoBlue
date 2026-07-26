@@ -1,55 +1,32 @@
-﻿# A Liquidity Stress Framework for Morpho Blue, Adapted from Basel III
+# A Liquidity Stress Framework for Morpho Blue, Adapted from Basel III
 
-> **Summary**. We build a liquidity stress framework for Morpho Blue
-> isolated lending markets, adapting the Liquidity Coverage Ratio
+> **Summary**. We build a liquidity-stress framework for Morpho Blue
+> isolated lending markets, adapting the Liquidity Coverage Ratio logic
 > defined by the Basel Committee on Banking Supervision in BCBS 238
-> (2013). The framework is calibrated against three historical stress
-> events (the KelpDAO exploit of April 2026, the USDC depeg of March
-> 2023, and the staked-Ether discount episode of May 2022). Two of
-> three events are correctly flagged ahead of the event by our
-> pre-event detection criteria; the third failure is informative. the
-> staked-Ether episode of May 2022 was a multi-day slow-rolling
-> repricing of the staked-Ether-to-Ether ratio rather than a 24-hour
-> liquidity stress, and our framework correctly does not classify it
-> as the latter. Applied forward to the **26 most material Morpho Blue
-> isolated markets on Ethereum mainnet** (approximately 1.7 billion
-> U.S. dollars of aggregate Total Value Locked), the framework
-> produces two complementary findings.
+> (2013). The backtest layer uses three retained event fixtures: a stylised
+> rsETH incident-inspired stress path, the March 2023 USDC depeg, and the
+> May 2022 staked-Ether discount. Two fixtures trigger the pre-specified
+> 24-hour warning criteria; the slow-moving staked-Ether discount does not.
 >
-> **Under LCR-inspired 24-hour stress (LSR-24)** (drawdown floor calibrated
-> per asset class against historical events, outflow alpha calibrated
-> on stress-time withdrawal velocities), 1 market is flagged red, 7
-> are flagged yellow, and 18 fall in the green tier (split between
-> green-watch and green-strong). The single red flag is on the Pendle
-> principal-token market PT-apyUSD-18JUN2026/USDC, with 99th-percentile
-> bad debt at 5.7% of TVL. The yellow tier carries the bulk of the
-> protocol's material exposure: approximately 14.5 million U.S. dollars
-> of cumulative 99th-percentile bad debt across the four mainstream
-> BTC/ETH-collateral markets (cbBTC/USDC, wstETH/USDT, WBTC/USDC,
-> wstETH/USDC).
+> The committed forward-looking snapshot is dated **16 July 2026** at
+> Ethereum state block **25,545,086**. Of 26 monitored markets, 24 are
+> evaluated. The survival frontier alpha* has a median of **10.7%** and a
+> minimum of **1.0%**. Applying the publication tier rule yields **9 red,
+> 14 yellow, and 1 green** market.
 >
-> **Under an extreme stress test** calibrated on the historical 99.5%-
-> confidence band (drawdown 25%, outflow alpha 35%, anchored on the
-> KelpDAO 2026 and USDC depeg 2023 episodes), 8 of 26 markets fail
-> the survival criterion (LCR < 1 or 99th-percentile bad debt above
-> 10% of TVL). The 8 failing markets carry approximately 28% of the
-> roster's TVL. Failures cluster on Pendle principal tokens, leveraged
-> liquid staking markets at high liquidation thresholds (94.5% to
-> 96.5%), and exotic synthetic stablecoins.
+> In the separate class-aware extreme scenario, **20 of 24** evaluated
+> markets fail the liquidity leg while **0 of 24** fail the solvency leg.
+> The result is a liability-liquidity finding at the stated target
+> utilisation and assumptions, not a claim that the underlying collateral
+> is insolvent. Full exclusions, assumptions, and per-market results are
+> reported below and in the machine-readable CSV/JSON snapshot.
 >
-> **Across the top 20 MetaMorpho vaults**, the framework's tier
-> classification yields a curator discipline score that ranges from 0.0
-> (fully conservative) to 2.0 (significant yellow exposure). The four
-> largest USDC-asset vaults (Gauntlet USDC Prime, Steakhouse USDC,
-> Vault Bridge USDC, Hakutora USDC) converge at a score of
-> approximately 2.0, reflecting near-exclusive allocation to mainstream
-> BTC/ETH-collateral markets. The finding is structural: the USDC vault
-> product concentrates the protocol's material tail risk in a small
-> number of yellow-tier markets where the bulk of DeFi USDC yield
-> originates.
+> The former v1.0 MetaMorpho curator analysis is excluded from the current
+> publication because it used a superseded tier engine. It is retained only
+> in `docs/archive/metamorpho_v1.0.md`.
 >
-> The full source code, test suite, and reproducible event fixtures
-> are open-source.
+> The source code, tests, retained fixtures, publication manifest, and
+> generated result fragments are included in the repository.
 
 ---
 
@@ -80,7 +57,7 @@ This work formalises the transposition. We build:
 - An on-chain analogue of the Liquidity Coverage Ratio (the regulatory
   ratio defined in BCBS 238, 2013, which requires regulated banks to
   hold sufficient liquid assets to cover stressed outflows over 30
-  days; see Â§2.1 below);
+  days; see §2.1 below);
 - A Monte Carlo simulation framework over an empirical distribution of
   collateral price drawdowns;
 - A falsifiable validation procedure with three pre-specified
@@ -93,13 +70,12 @@ The choice of Morpho Blue as the target protocol is motivated by:
   isolated lending markets and immutable parameters. This produces a
   small surface area and a well-defined mathematical state vector for
   each market.
-- **Industry positioning in 2026**: following the KelpDAO collateral
-  exploit of April 2026, approximately 8 billion U.S. dollars of Total
-  Value Locked has migrated from Aave to Morpho (per public on-chain
-  data observed at the time of writing). Risk methodology adapted to
-  Morpho's isolated-market design is in active demand among the
-  protocol's MetaMorpho vault curators, including Steakhouse
-  Financial, Block Analitica, and B.Protocol.
+- **Industry positioning in 2026**: the April 2026 rsETH incident
+  demonstrated how collateral impairment and withdrawal pressure can interact
+  across lending venues. It provides a recent stress context for methodology
+  adapted to Morpho's isolated-market design; this report does not attribute
+  subsequent market-wide withdrawals to a specific destination without a
+  retained flow analysis.
 
 This work is methodological. The contribution is a falsifiable,
 reproducible adaptation of regulatory liquidity standards to one
@@ -148,7 +124,7 @@ For a Morpho Blue lending market, our adaptation is as follows. Let:
 - $\pi(V) = a \cdot V^b$ denote the slippage of a sale of $V$
   collateral-asset units on a decentralised exchange, expressed as a
   fraction of the oracle price; the parameters $a > 0$ and $b \in (0,1)$
-  are fitted from data per the Almgren, Chriss model (see Â§2.4).
+  are fitted from data per the Almgren, Chriss model (see §2.4).
 
 The **on-chain Level 1 component** is the available liquidity:
 $L_1 = L$.
@@ -179,7 +155,7 @@ This formulation **differs from a literal Basel haircut transposition**
 on a critical point: the Basel haircut applies to a notional asset
 value, while our Level 2A is bounded above by the per-position debt.
 This avoids the over-counting of pledged collateral that we observed
-in earlier versions of this work (see Â§3 of [`SCENARIOS.md`](./SCENARIOS.md)
+in earlier versions of this work (see §3 of [`SCENARIOS.md`](./SCENARIOS.md)
 for the full discussion).
 
 The **on-chain numerator** is then
@@ -191,7 +167,7 @@ total supply withdrawn during the 24-hour stress window:
 
 $$\mathrm{Outflows_{oc}}(\alpha) = \alpha \cdot S - \min\left(L_{2A,\mathrm{net}}, 0.75 \cdot \alpha S\right).$$
 
-The cap at 75% of outflows reproduces BCBS 238 Annex 4 Â§170, which
+The cap at 75% of outflows reproduces BCBS 238 Annex 4 §170, which
 limits the offset between secured-lending inflows and outflows.
 
 The **outflow fraction $\alpha$ is event-calibrated** from the
@@ -205,10 +181,11 @@ quantile of drawdowns, and $\mathbf{1}\{\cdot\}$ the indicator
 function. The constant $1.5$ and the additive term $0.30$ are
 calibrated from observations of withdrawal velocity in real events:
 
-- During the KelpDAO event of April 2026, the Aave Total Value Locked
-  fell by approximately 17% in 48 hours, peaking at approximately 10%
-  in 24 hours, implying a withdrawal multiplier in the range
-  $[1.4, 1.7]$ relative to the contemporaneous price drawdown.
+- The rsETH incident is used as a severe withdrawal-and-collateral-stress
+  context. The retained repository does not independently reproduce a precise
+  24-hour Aave withdrawal series, so the 1.5 scale and whale term should be
+  read as conservative modelling choices rather than uniquely identified
+  coefficients.
 - During the USDC depeg of March 2023, the Aave USDC market saw
   approximately 25% withdrawals on day one, consistent with a
   multiplier of $1.5$ applied to a drawdown of $\approx 12\%$, plus
@@ -253,7 +230,7 @@ recovery from collateral), yet drain quickly under concentrated whale
 exit (high time-to-illiquid risk). Conversely, a market may have slow
 withdrawal velocity yet be vulnerable to a price shock (high
 bad-debt-probability risk). The three criteria are designed to be
-*non-redundant*: empirically (see Â§3.2 below) we find that different
+*non-redundant*: empirically (see §3.2 below) we find that different
 events trigger different criteria, and the combination is required for
 adequate coverage.
 
@@ -281,7 +258,7 @@ selected to span distinct risk profiles.
 
 | Event | Type | Day-zero (T-zero) | Counterfactual? |
 |---|---|---|---|
-| **KelpDAO collateral exploit** | Liquid-restaking-token collateral exploit, single-day cascade | 2026-04-19 23:59 UTC | No, Morpho Blue was active |
+| **rsETH incident-inspired fixture** | Stylised liquid-restaking-token stress path | 2026-04-19 23:59 UTC (modelled day-zero) | No; applied to a synthetic Morpho market |
 | **USDC depeg from Silicon Valley Bank collapse** | Stable-on-stable depeg | 2023-03-10 12:00 UTC | Yes, predates Morpho Blue |
 | **Staked-Ether discount during the Terra/UST collapse** | Liquid-staking-token discount, multi-day slow-roll | 2022-05-11 09:00 UTC | Yes, predates Morpho Blue |
 
@@ -300,7 +277,7 @@ oracle), seeded with the actual price path of the event.
 | USDC depeg 2023 | 8.30 (green) | 48% | 6.6h (red) | 0% (green) | **red** | **PASS** |
 | Staked-Ether 2022 | 80.0 (green) | 5% (floor) | infinite (green) | 0% (green) | **green** | **FAIL** |
 
-**KelpDAO and the USDC depeg are flagged ahead of the event** through
+**The rsETH incident-inspired fixture and the USDC depeg fixture are flagged before their modelled shocks** through
 the time-to-illiquid criterion at the event-calibrated $\alpha$. The
 bad-debt-probability criterion fires only on KelpDAO. This is
 informative: the USDC oracle was *sticky* during the depeg (the
@@ -373,7 +350,7 @@ scenario, not the worst conceivable hybrid).
 calibrated on a normal price path (no event injected), reflecting
 moderate runoff coherent with the price drop. Class minima for the
 99th-percentile drawdown are calibrated against historical events
-(see [`METHODOLOGY.md`](./METHODOLOGY.md) Â§3 for the full table):
+(see [`METHODOLOGY.md`](./METHODOLOGY.md) §3 for the full table):
 
 - Stablecoin synthetics: 5% (USDC depeg 2023 trough was 8%)
 - Liquid staking tokens: 8% (stETH discount 2022 reached 8%)
@@ -489,7 +466,7 @@ Latent insolvency = debt not covered by collateral on stressed oracle terms (Mor
 
 #### Documented exclusions
 
-* **sUSDS/USDT**: no slippage curve (unusable quotes (7/7 positive-bps rows))
+* **sUSDS/USDT**: no slippage curve (insufficient slippage observations: 7 usable, 8 required)
 * **msY/USDC**: no oracle price series (oracle interface not supported this window)
 <!-- END GENERATED: report_results -->
 
@@ -539,120 +516,15 @@ headline is the dichotomy itself: every evaluated market fails the
 liquidity leg while none fails the solvency leg.
 
 
-## 4ter. MetaMorpho vault curator discipline
+## 4ter. MetaMorpho vault analysis (archived)
 
-> **Status**: the figures in this section come from the v1.0 vault
-> enrichment run. Regenerate via `scripts/fetch_metamorpho_vaults.py` and
-> `scripts/generate_visualizations.py` before publication, or defer this
-> section to a follow-up post.
+The former v1.0 curator-discipline analysis used a superseded tier engine and
+hard-coded visualisation inputs. It is excluded from the v1.1 publication and
+retained only in [`docs/archive/metamorpho_v1.0.md`](./archive/metamorpho_v1.0.md)
+for historical traceability. No current curator conclusion is drawn from those
+figures. A future curator study must be rebuilt from a dated vault-allocation
+snapshot and the current v1.1 market classifications.
 
-### 4ter.1 Motivation
-
-Beyond per-market analysis, a natural application of the tier
-classification is to score the **discipline of MetaMorpho vault
-curators**: how exposed is each vault to markets that the framework
-classifies as red, yellow, green-watch, or green-strong? The output
-is not a verdict on curator quality (a curator may legitimately
-allocate to higher-tier markets if they have priced in the risk) but
-a quantitative breakdown that supports comparability across curators.
-
-### 4ter.2 Methodology
-
-For each MetaMorpho vault, we extract the supply allocations across
-markets via the Morpho API and compute a TVL-weighted **curator
-discipline score**:
-
-$$\text{score} = \sum_{m \in \text{allocations}} \frac{\text{supply}_m}{\text{TVL}_{\text{vault}}} \cdot w(\text{tier}_m)$$
-
-where the tier weights $w$ are: red $= 4$, yellow $= 2$, green-watch
-$= 1$, green-strong $= 0$. Allocations to markets outside our 26-
-market roster (typically smaller markets, EUR-stablecoin markets, or
-chains other than Ethereum) are bucketed as `unknown` and do not
-contribute to the score.
-
-The score interpretation is:
-
-- $0.0$, perfectly conservative: vault is fully invested in markets
-  the framework classifies as green-strong.
-- $\sim 1.0$, moderate discipline: vault has meaningful exposure to
-  green-watch markets and small yellow exposure.
-- $\sim 2.0$, significant yellow exposure: vault is allocating to
-  yellow-tier markets that carry material absolute tail risk.
-- $> 2.0$, substantial red/yellow exposure that warrants curator-side
-  review.
-
-### 4ter.3 Result
-
-Applied to the top 20 MetaMorpho vaults by TVL on Ethereum mainnet:
-
-| Vault | Asset | TVL ($M) | Score | red% | yellow% | green-watch% | green-strong% | unknown% |
-|---|---|---|---|---|---|---|---|---|
-| Sentora PYUSD | PYUSD | 244.5 | 0.56 | 0.0 | 8.8 | 38.5 | 35.4 | 17.3 |
-| Sentora RLUSD | RLUSD | 166.0 | 0.00 | 0.0 | 0.0 | 0.0 | 61.0 | 39.0 |
-| Gauntlet USDC Prime | USDC | 150.9 | 2.00 | 0.0 | 100.0 | 0.0 | 0.0 | 0.0 |
-| Steakhouse USDC | USDC | 129.4 | 1.94 | 0.0 | 96.8 | 0.0 | 0.0 | 3.2 |
-| Steakhouse USDT | USDT | 125.2 | 1.77 | 0.0 | 82.9 | 11.7 | 0.0 | 5.4 |
-| Steakhouse Ethena USDtb | USDtb | 85.2 | 0.00 | 0.0 | 0.0 | 0.0 | 100.0 | 0.0 |
-| Steakhouse EURCV | EURCV | 51.2 | 0.00 | 0.0 | 0.0 | 0.0 | 0.0 | 100.0 |
-| Sentora PYUSD Core | PYUSD | 50.2 | 1.01 | 0.0 | 1.5 | 98.5 | 0.0 | 0.0 |
-| Vault Bridge USDC | USDC | 48.9 | 2.00 | 0.0 | 100.0 | 0.0 | 0.0 | 0.0 |
-| Gauntlet WETH Prime | WETH | 42.1 | 0.99 | 0.0 | 0.0 | 98.7 | 0.0 | 1.3 |
-
-The full table of 20 vaults is reproducible by running
-`python scripts/fetch_metamorpho_vaults.py --top 20`.
-
-### 4ter.4 Findings
-
-**Finding 1: Cross-curator convergence on USDC vault strategy.** The
-four largest USDC-asset vaults (Gauntlet USDC Prime, Steakhouse USDC,
-Vault Bridge USDC, Hakutora USDC) all converge on a curator score of
-approximately 2.0, reflecting a near-exclusive allocation to the
-yellow tier. This is not a quality differentiator: it is a
-**structural feature** of the USDC vault product. The yellow tier
-contains the four mainstream BTC/ETH-collateral markets (cbBTC/USDC,
-WBTC/USDC, wstETH/USDT, wstETH/USDC) which represent the bulk of USDC
-yield-bearing supply on Morpho Blue. Any USDC vault providing
-competitive net APY must be exposed to these markets.
-
-The finding therefore is not "Steakhouse and Gauntlet are aggressive"
-but rather "**the USDC product structurally concentrates the protocol's
-material tail risk** in a small number of mainstream markets". The
-risk is not idiosyncratic to any one curator.
-
-**Finding 2: Differentiated discipline across asset classes.** USDC
-vaults converge at score $\approx 2.0$. PYUSD and stablecoin-synthetic
-vaults are more diversified: Sentora PYUSD has a score of 0.56 with
-33% green-strong allocation; Smokehouse vaults distribute across many
-small markets (22+ allocations). RLUSD-asset vaults (Sentora RLUSD)
-score 0.0, reflecting a pure allocation to the green-strong
-syrupUSDC/RLUSD market.
-
-**Finding 3: Scope limitation: 100% unknown vaults.** Three vaults
-in the top 20 score 0.0 with 100% unknown classification: Steakhouse
-EURCV, Vault Bridge WBTC, and Adpend USDC. The first two allocate to
-markets outside our 26-market USD-denominated roster (EUR-stablecoin
-markets and smaller WBTC markets respectively); the third uses 30
-small allocations spread across long-tail markets we did not fetch.
-The framework provides no useful information for these vaults at the
-current roster size.
-
-### 4ter.5 Limitations
-
-- **The score weights are arbitrary**: red = 4 reflects an editorial
-  choice that a red allocation is twice as concerning as a yellow.
-  A different weighting scheme would produce different rankings.
-  We provide the per-tier breakdown alongside the score so
-  consumers can re-weight for their own purposes.
-- **Static snapshot**: vaults rebalance, often daily. The score is
-  point-in-time. A production deployment would compute the score
-  weekly and track its evolution per vault.
-- **Curator intent is not modelled**: a vault can intentionally hold
-  yellow-tier exposure if it has priced in the risk through a higher
-  expected yield, a withdrawal queue, or a guarantor backstop. The
-  framework reports tier exposure; it does not determine whether that
-  exposure is appropriate.
-
----
 
 ## 4quater. What changed versus v1.0, and why the panorama moved
 

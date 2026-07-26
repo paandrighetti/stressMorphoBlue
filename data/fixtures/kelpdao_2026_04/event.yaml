@@ -1,5 +1,5 @@
 event_id: "kelpdao_2026_04"
-event_name: "KelpDAO LRT exploit (counterfactual on Morpho Blue)"
+event_name: "rsETH incident-inspired stylised stress fixture"
 event_ts: "2026-04-20T14:00:00Z"
 t0_ts: "2026-04-19T23:59:00Z"
 window_pre_days: 5
@@ -9,21 +9,26 @@ affected_loan_assets: ["USDC"]
 counterfactual: false
 expected_red_flag: true
 notes: |
-  KelpDAO LRT collateral exploit. ~$292M drained from Aave; ~$196M
-  bad debt on Aave V3. Morpho Blue isolated markets using rsETH as
-  collateral were affected through cascading liquidations.
+  Stylised rsETH/USDC Morpho Blue stress fixture inspired by the incident
+  disclosed on 18 April 2026. The event_ts below is the modelled shock
+  timestamp used by the retained hourly path; it is not the incident
+  disclosure timestamp. This fixture is not an exact replay of exploit
+  flows, protocol losses, or a specific historical Morpho market.
 
-  This fixture represents a stylized rsETH/USDC Morpho Blue market
-  with parameters and TVL representative of mainnet at T0.
+  Public Aave loss estimates evolved materially with recovery assumptions:
+  the initial incident report estimated approximately $123.7M-$230.1M,
+  while a later recovery scenario estimated approximately $62.4M-$162.5M.
+  No single final loss number is used as a calibration target here.
 
   Sources:
-    - Coverage of event: rekt.news (publication date 2026-04-21)
-    - Aave governance forum post-mortem thread (2026-04-22+)
-    - Morpho team status update (2026-04-21)
-    - On-chain: rsETH/USDC Uniswap V3 trades for slippage calibration
+    - Aave governance: rsETH incident — 2026-04-18
+      https://governance.aave.com/t/rseth-incident-2026-04-18/24481
+    - Aave governance: rsETH Incident Report (April 20, 2026)
+      https://governance.aave.com/t/rseth-incident-report-april-20-2026/24580
+    - Retained fixture price path: data/fixtures/kelpdao_2026_04/prices.csv
 
   Calibration choices:
-    - LLTV = 0.86 (typical for LRT/USDC Morpho markets)
-    - rate_at_target = 0.045 (4.5% APR)
+    - LLTV = 0.86 (representative modelling assumption for an LRT/USDC market)
+    - rate_at_target = 0.045 (4.5% APR modelling assumption)
     - Position distribution: 250 positions, log-normal sizes,
       LTV ~ Beta(7, 3) capped at LLTV - 1bp

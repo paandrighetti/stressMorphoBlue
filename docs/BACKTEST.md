@@ -65,17 +65,20 @@ the 2022 to 2026 window. Each event is packaged as a versioned
   calibration;
 - `sources.md`, full source attribution per data point.
 
-### 2.1 KelpDAO collateral exploit (April 2026): primary anchor
+### 2.1 rsETH incident-inspired fixture (April 2026): primary anchor
 
-- **Date**: 20 April 2026, approximately 14:00 UTC.
-- **Day-zero ($t_0$)**: 19 April 2026, 23:59 UTC.
-- **Description**: The KelpDAO liquid-restaking-token collateral was
-  exploited, draining approximately 292 million U.S. dollars from
-  Aave; approximately 196 million U.S. dollars materialised as bad
-  debt. Morpho Blue isolated lending markets using the same collateral
-  (rsETH and ezETH variants) saw cascading liquidations.
-- **Why anchor**: most recent, highest-impact, *isolated-market design
-  under test*, large MetaMorpho vault flows post-event.
+- **Incident disclosure**: 18 April 2026; Aave's Guardian reported the
+  initial freezes from 18:52 UTC.
+- **Modelled shock timestamp**: 20 April 2026, approximately 14:00 UTC.
+- **Modelled day-zero ($t_0$)**: 19 April 2026, 23:59 UTC.
+- **Description**: This is a stylised rsETH/USDC Morpho Blue stress
+  fixture inspired by the April 2026 incident. It is not an exact replay
+  of the exploit, protocol flows, or final losses. Public Aave estimates
+  evolved with recovery assumptions: the initial incident report gave a
+  range of approximately 123.7--230.1 million U.S. dollars, while a later
+  recovery scenario gave approximately 62.4--162.5 million U.S. dollars.
+- **Why anchor**: a recent, high-severity liquid-restaking-token stress
+  shape with an oracle/market-price gap and constrained exit liquidity.
 
 ### 2.2 USDC depeg (March 2023): stable-collateral stress
 
@@ -224,7 +227,7 @@ class BacktestVerdict:
 ```
 
 **Aggregate success metric**: at least 2 of 3 events must pass. The
-KelpDAO event must pass absolutely (it is the primary anchor).
+The incident-inspired fixture must be flagged under the pre-specified criteria; it is the primary stylised anchor.
 
 **Severity flags** (from [`SCENARIOS.md §7`](./SCENARIOS.md)):
 

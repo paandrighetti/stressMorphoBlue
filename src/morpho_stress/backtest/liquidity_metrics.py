@@ -149,6 +149,37 @@ def hqla_v03(
     return l1, total_recovery, total_bad_debt, hqla_total
 
 
+
+def rolling_drawdowns(
+    market_path: np.ndarray,
+    window_observations: int = 24,
+) -> np.ndarray:
+    """Return all valid peak-to-trough drawdowns for rolling windows.
+
+    The final admissible window is included. Invalid windows with a
+    non-positive or non-finite initial price or trough are skipped.
+    """
+    path = np.asarray(market_path, dtype=float)
+    if window_observations <= 0:
+        raise ValueError("window_observations must be positive")
+    if path.ndim != 1:
+        raise ValueError("market_path must be one-dimensional")
+    if len(path) < window_observations:
+        return np.array([], dtype=float)
+
+    drawdowns: list[float] = []
+    for i in range(len(path) - window_observations + 1):
+        window = path[i : i + window_observations]
+        peak = float(window[0])
+        trough = float(np.min(window))
+        if not np.isfinite(peak) or not np.isfinite(trough):
+            continue
+        if peak <= 0 or trough <= 0:
+            continue
+        drawdowns.append(max(0.0, (peak - trough) / peak))
+
+    return np.asarray(drawdowns, dtype=float)
+
 def calibrated_outflow_alpha(
     market_path: np.ndarray,
     quantile: float = 0.99,
@@ -195,19 +226,9 @@ def calibrated_outflow_alpha(
     Returns:
         alpha in [0.05, 0.60]
     """
-    if len(market_path) < window_blocks + 1:
-        return 0.10  # fallback: 10% — moderate stress
-
-    drawdowns = []
-    for i in range(len(market_path) - window_blocks):
-        peak = market_path[i]
-        if peak <= 0:
-            continue
-        trough = market_path[i:i + window_blocks].min()
-        drawdowns.append(max(0.0, (peak - trough) / peak))
-
-    if not drawdowns:
-        return 0.10
+    drawdowns = rolling_drawdowns(market_path, window_blocks)
+    if drawdowns.size == 0:
+        return 0.10  # explicit moderate-stress fallback for this helper
 
     p99_drawdown = float(np.quantile(drawdowns, quantile))
 

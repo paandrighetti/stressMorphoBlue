@@ -25,6 +25,7 @@ from morpho_stress.backtest.fixtures import EventFixture
 from morpho_stress.backtest.liquidity_metrics import (
     calibrated_outflow_alpha,
     lcr_onchain_v03,
+    rolling_drawdowns,
 )
 from morpho_stress.models.constants import BLOCK_TIME_SEC
 from morpho_stress.models.slippage import SlippageCurve
@@ -168,16 +169,14 @@ def _evaluate_bad_debt_probability(
     """MC over event-derived drawdown distribution; compute P[bad_debt > 0]."""
     state = fixture.initial_state
 
-    # Build empirical drawdown distribution from the price path
-    market_path = fixture.market_path
-    drawdowns = []
-    for i in range(len(market_path) - 24):
-        peak = market_path[i]
-        if peak <= 0:
-            continue
-        trough = market_path[i:i + 24].min()
-        drawdowns.append(max(0.0, (peak - trough) / peak))
-    drawdowns_arr = np.array(drawdowns) if drawdowns else np.array([0.05, 0.10, 0.20, 0.30])
+    # Build the empirical drawdown distribution from every admissible
+    # 24-observation window, including the final window. Publication and
+    # backtest runs must not silently substitute synthetic observations.
+    drawdowns_arr = rolling_drawdowns(fixture.market_path, 24)
+    if drawdowns_arr.size == 0:
+        raise ValueError(
+            f"{fixture.event_id}: no valid 24-observation drawdown windows"
+        )
 
     dist = EmpiricalDistribution(observations=drawdowns_arr)
 

@@ -14,6 +14,7 @@ from morpho_stress.backtest import (
     hqla_v03,
     lcr_onchain_v03,
     position_recovery_value,
+    rolling_drawdowns,
     synthesize_uniswap_swaps,
 )
 from morpho_stress.models.slippage import SlippageCurve
@@ -226,6 +227,26 @@ def test_lcr_v03_stressed_when_high_alpha_and_drop() -> None:
 # calibrated_outflow_alpha
 # ---------------------------------------------------------------------------
 
+
+
+
+def test_rolling_drawdowns_includes_final_window() -> None:
+    """A shock visible only in the final admissible window is retained."""
+    path = np.full(25, 100.0)
+    path[-1] = 50.0
+
+    drawdowns = rolling_drawdowns(path, window_observations=24)
+
+    assert drawdowns.shape == (2,)
+    assert drawdowns[0] == 0.0
+    assert drawdowns[1] == 0.5
+    assert calibrated_outflow_alpha(path, window_blocks=24) == 0.60
+
+
+def test_rolling_drawdowns_skips_invalid_windows() -> None:
+    path = np.array([0.0, 100.0, 90.0])
+    drawdowns = rolling_drawdowns(path, window_observations=2)
+    assert drawdowns.tolist() == [0.1]
 
 def test_alpha_floor_on_flat_path() -> None:
     """Flat market path → alpha hits floor (no drawdown)."""

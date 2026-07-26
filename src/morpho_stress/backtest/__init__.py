@@ -11,6 +11,7 @@ from morpho_stress.backtest.liquidity_metrics import (
     hqla_v03,
     lcr_onchain_v03,
     position_recovery_value,
+    rolling_drawdowns,
 )
 from morpho_stress.backtest.forward_looking import (
     MarketProfile,
@@ -52,6 +53,7 @@ __all__ = [
     "list_fixtures",
     "load_event",
     "position_recovery_value",
+    "rolling_drawdowns",
     "run_backtest",
     "synthesize_uniswap_swaps",
 ]

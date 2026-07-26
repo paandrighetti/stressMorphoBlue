@@ -57,6 +57,7 @@ from morpho_stress.scenarios.liquidation import liquidation_incentive_factor
 from morpho_stress.scenarios.state import MarketParams, MarketState, Position
 
 log = logging.getLogger("run_evaluation")
+METHODOLOGY_REVISION = "rolling-window-v2"
 
 # Exclusion-reason helpers: matured principal tokens exit via par redemption
 # (no AMM depth to measure), permissioned wrappers have no public venue.
@@ -475,6 +476,7 @@ def main() -> None:
     tv = df["supply_assets"].sum()
     summary = {
         "engine": "v1.1",
+        "methodology_revision": METHODOLOGY_REVISION,
         "alpha_star_median": float(df["alpha_star"].median()),
         "alpha_star_min": float(df["alpha_star"].min()),
         "markets_evaluated": int(len(df)),

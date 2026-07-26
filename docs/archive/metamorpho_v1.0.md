@@ -4,10 +4,9 @@
 > Figures below come from the v1.0 vault enrichment run and predate
 > the v1.1 engine; they are excluded from the v1.1 publication scope.
 
-> **Status**: the figures in this section come from the v1.0 vault
-> enrichment run. Regenerate via `scripts/fetch_metamorpho_vaults.py` and
-> `scripts/generate_visualizations.py` before publication, or defer this
-> section to a follow-up post.
+> **Status**: historical record only. The hard-coded v1.0 visualisation
+> generator has been retired. Any future curator study must be rebuilt from a
+> dated vault-allocation snapshot and the current classification engine.
 
 ### 4ter.1 Motivation
 

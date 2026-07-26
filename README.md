@@ -108,7 +108,7 @@ morpho-blue-liquidity-stress/
 | **5** | Version-0.3 framework, decoupled stress scenarios (price-stress and liquidity-stress), continuous LCR criterion, Beta-scaled position distribution, asset-class slippage and drawdown calibration, extreme stress test, forward-looking analysis on 26 live markets (superseded by v1.1; see docs/MODEL_CORRECTIONS.md) | Done |
 | **6** | v1.1: contract-aligned engine (C1-C7), live-position evaluation via the Morpho API, keyless multi-venue depth (Uniswap quoter, CoW Protocol, KyberSwap, Pendle router), survival-frontier panorama, generated-figures publication chain | Done |
 | **7** | Public deliverables (Dune dashboard, Mirror article, public-facing summary) | Done |
-| **8** | Empirical position-level reconstruction (`scripts/enrich_positions.py`), MetaMorpho vault curator discipline score (`scripts/fetch_metamorpho_vaults.py`), corner case diagnostic (`scripts/diagnose_corner_cases.py`), multi-day NSFR-style horizon (`--horizon-days N`), benchmark vs incumbent frameworks (`docs/BENCHMARK.md`) | Done |
+| **8** | Empirical position-level reconstruction (`scripts/enrich_positions.py`), archived v1.0 MetaMorpho vault study (`docs/archive/metamorpho_v1.0.md`), corner case diagnostic (`scripts/diagnose_corner_cases.py`), multi-day NSFR-style horizon (`--horizon-days N`), benchmark vs incumbent frameworks (`docs/BENCHMARK.md`) | Done |
 
 ---
 
