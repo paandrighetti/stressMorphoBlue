@@ -8,9 +8,13 @@ import json
 from pathlib import Path
 
 
+def canonical_bytes(path: Path) -> bytes:
+    """Return platform-independent bytes for text publication outputs."""
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def canonical_sha256(path: Path) -> str:
-    content = path.read_bytes().replace(b"\r\n", b"\n")
-    return hashlib.sha256(content).hexdigest()
+    return hashlib.sha256(canonical_bytes(path)).hexdigest()
 
 
 def main() -> None:
@@ -49,10 +53,16 @@ def main() -> None:
             "Snapshot metadata and hashes are immutable for the committed "
             "evaluation outputs. A new evaluation requires a new manifest."
         ),
+        "source_data_scope": (
+            "This manifest pins the committed evaluation CSV and JSON. Raw "
+            "Parquet caches are gitignored; data/manifest.json records acquisition "
+            "runs, but this release does not bind the evaluation outputs to exact "
+            "input-cache hashes."
+        ),
         "files": {
             path.as_posix(): {
                 "sha256": canonical_sha256(path),
-                "size_bytes": path.stat().st_size,
+                "size_bytes": len(canonical_bytes(path)),
             }
             for path in args.files
         },

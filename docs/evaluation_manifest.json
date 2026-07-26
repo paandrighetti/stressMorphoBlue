@@ -7,14 +7,15 @@
   "engine": "v1.1",
   "methodology_revision": "rolling-window-v2",
   "publication_policy": "Snapshot metadata and hashes are immutable for the committed evaluation outputs. A new evaluation requires a new manifest.",
+  "source_data_scope": "This manifest pins the committed evaluation CSV and JSON. Raw Parquet caches are gitignored; data/manifest.json records acquisition runs, but this release does not bind the evaluation outputs to exact input-cache hashes.",
   "files": {
     "docs/evaluation_results.csv": {
       "sha256": "d49f5de7311c78ab44e6285e2d98ee0cd188384fd042774d9a248ffb1ef091d6",
-      "size_bytes": 7756
+      "size_bytes": 7731
     },
     "docs/evaluation_summary.json": {
       "sha256": "2301c2ab55452cc519211b24ffac82bf10b546233e9c694e2adf44aa62fbcf83",
-      "size_bytes": 1335
+      "size_bytes": 1297
     }
   }
 }

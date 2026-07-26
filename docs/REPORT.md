@@ -620,7 +620,15 @@ python scripts/assemble_docs.py           # splices figures into the docs
 ```
 
 
-The full pipeline is open-source. Key features:
+The full pipeline is open-source. The committed evaluation CSV/JSON and
+assembled publication are pinned by `docs/evaluation_manifest.json`. Raw
+Parquet caches are gitignored and are not part of the source release;
+`data/manifest.json` records acquisition runs, but the current publication
+manifest does not bind the committed outputs to exact input-cache hashes. A
+later re-fetch therefore reproduces the pipeline, not necessarily the
+historical input bytes.
+
+Key features:
 
 - **Versioned event fixtures** under `data/fixtures/<event-id>/` with
   per-row source attribution, reproducible from the fixture

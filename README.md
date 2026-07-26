@@ -139,6 +139,13 @@ PYTHONPATH=src python notebooks/phase5_demo.py
 cp config.yaml config.local.yaml  # then edit to add secrets via environment variables
 ```
 
+The committed evaluation CSV/JSON and assembled publication are pinned by
+`docs/evaluation_manifest.json`. Raw Parquet caches are gitignored and are not
+part of the source release; `data/manifest.json` records acquisition runs, but
+the current publication manifest does not bind the committed outputs to exact
+input-cache hashes. Re-fetching later therefore reproduces the pipeline, not
+necessarily the historical input bytes.
+
 ---
 
 ## How to read this repository

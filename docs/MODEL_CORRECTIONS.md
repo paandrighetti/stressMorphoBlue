@@ -50,11 +50,10 @@ published figures flow through `run_evaluation.py`,
 transcription.
 
 
-## C7. Rolling-window boundary and backtest fallback (publication rerun required)
+## C8. Rolling-window boundary and backtest fallback (publication rerun completed)
 
 The rolling drawdown implementation now includes the final admissible window
 (`len(path) - window + 1`). The backtest runner also refuses to replace an
-empty measured distribution with synthetic drawdowns. Because the corrected
-window set can alter calibrated outflow alpha and companion time-to-illiquidity
-metrics, committed evaluation outputs must be regenerated before this change is
-released as part of a publication snapshot.
+empty measured distribution with synthetic drawdowns. The committed
+`rolling-window-v2` evaluation outputs and publication documents were
+regenerated after this correction.

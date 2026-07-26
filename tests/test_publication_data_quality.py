@@ -39,3 +39,17 @@ def test_publication_uses_current_methodology_revision() -> None:
     expected = "rolling-window-v2"
     assert summary.get("methodology_revision") == expected
     assert manifest.get("methodology_revision") == expected
+
+def test_manifest_hashes_and_sizes_use_canonical_bytes() -> None:
+    import hashlib
+
+    manifest = json.loads(
+        Path("docs/evaluation_manifest.json").read_text(encoding="utf-8")
+    )
+    for filename, metadata in manifest["files"].items():
+        content = Path(filename).read_bytes().replace(b"\r\n", b"\n")
+        assert metadata["sha256"] == hashlib.sha256(content).hexdigest()
+        assert metadata["size_bytes"] == len(content)
+
+    assert "does not bind" in manifest["source_data_scope"]
+
