@@ -2,9 +2,9 @@
 
 Provides three operations that several scripts need:
 
-1. `get_erc20_metadata(rpc, address)` — fetch (symbol, decimals) for any ERC-20.
-2. `get_block_timestamp(rpc, block_number)` — fetch the wall-clock time of a block.
-3. `detect_oracle_type(rpc, oracle_address)` — categorise the oracle source by
+1. `get_erc20_metadata(rpc, address)`: fetch (symbol, decimals) for any ERC-20.
+2. `get_block_timestamp(rpc, block_number)`: fetch the wall-clock time of a block.
+3. `detect_oracle_type(rpc, oracle_address)`: categorise the oracle source by
    inspecting its interface. Returns one of {chainlink, pyth, redstone,
    uniswap_twap, composite, unknown}.
 
@@ -50,7 +50,7 @@ def get_erc20_metadata(rpc: RPCClient, address: str) -> tuple[str, int]:
     try:
         decimals = int(contract.functions.decimals().call())
     except (ContractLogicError, Web3RPCError, ValueError) as e:
-        logger.warning("Failed to read decimals for %s: %s — defaulting to 18", address, e)
+        logger.warning("Failed to read decimals for %s: %s, defaulting to 18", address, e)
         decimals = 18
 
     # Some non-standard tokens return symbol as bytes32 rather than string;
@@ -72,13 +72,13 @@ def detect_oracle_type(rpc: RPCClient, oracle_address: str) -> str:
     Heuristic:
         - If `price()` succeeds → "morpho_oracle" (the canonical Morpho Blue
           oracle interface; every oracle attached to a Morpho market exposes
-          it, regardless of underlying source — Chainlink, Pyth, Redstone,
+          it, regardless of underlying source, Chainlink, Pyth, Redstone,
           custom).
         - Else if address is the zero address → "none" (idle markets).
-        - Else "unknown" — caller should investigate.
+        - Else "unknown", caller should investigate.
 
     We do not distinguish the underlying feed source (Chainlink vs. Pyth
-    vs. custom) because that distinction does not affect our framework —
+    vs. custom) because that distinction does not affect our framework
     the oracle is always queried via `price()` and treated as a black box
     feed. If a downstream consumer needs to know the underlying source,
     they can read the implementation-specific fields (BASE_FEED_1, etc.).

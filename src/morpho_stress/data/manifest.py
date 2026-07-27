@@ -1,4 +1,4 @@
-"""Pipeline manifest — tracks every successful data acquisition run.
+"""Pipeline manifest, tracks every successful data acquisition run.
 
 The manifest is the single source of truth for "what data version is on disk."
 Phase 3 modeling code reads the latest manifest entry to pin its inputs and
@@ -79,7 +79,7 @@ class Manifest:
     @staticmethod
     def hash_config(config_dict: dict[str, Any]) -> str:
         """Stable hash of a config dict (sorted keys, no whitespace)."""
-        blob = json.dumps(config_dict, sort_keys=True, separators=(",", ":")).encode()
+        blob = json.dumps(config_dict, sort_keys=True, separators=(", ", ":")).encode()
         return "sha256:" + hashlib.sha256(blob).hexdigest()
 
     @staticmethod

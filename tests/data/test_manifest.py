@@ -55,7 +55,7 @@ def test_manifest_append_only(tmp_path: Path) -> None:
     m.append_run(run2)
 
     m2 = Manifest(path)
-    assert len(m2._data["runs"]) == 2  # noqa: SLF001 — test introspects implementation
+    assert len(m2._data["runs"]) == 2  # noqa: SLF001, test introspects implementation
 
 
 def test_config_hash_stable() -> None:

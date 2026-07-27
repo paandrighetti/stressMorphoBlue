@@ -29,7 +29,7 @@ def _is_retryable_http_error(exc: BaseException) -> bool:
         - Server errors (5xx)
         - SubgraphError (server-side GraphQL error, may be transient)
     Do NOT retry on:
-        - 4xx client errors (validation failures, malformed queries) — these
+        - 4xx client errors (validation failures, malformed queries): these
           are deterministic and will not change on retry; retrying just
           delays the inevitable failure and produces noisy logs.
     """
@@ -79,7 +79,7 @@ class SubgraphClient:
         response = self._client.post(
             self._url, json={"query": query, "variables": variables}
         )
-        # On 4xx/5xx, log the body before raising — helps diagnose
+        # On 4xx/5xx, log the body before raising: helps diagnose
         # GraphQL query/schema mismatches that return 400 with details.
         if response.status_code >= 400:
             try:

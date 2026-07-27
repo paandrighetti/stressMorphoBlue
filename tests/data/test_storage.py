@@ -1,4 +1,4 @@
-"""Tests for the storage layer — schema validation on Parquet write/read."""
+"""Tests for the storage layer, schema validation on Parquet write/read."""
 
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ def test_write_and_read_roundtrip(tmp_path: Path) -> None:
 
 def test_write_rejects_wrong_type(tmp_path: Path) -> None:
     table = _sample_markets_table()
-    # Cast lltv to float32 — should fail validation against float64 schema.
+    # Cast lltv to float32: should fail validation against float64 schema.
     cols = table.column_names
     new_columns = [
         table.column(c).cast(pa.float32()) if c == "lltv" else table.column(c)

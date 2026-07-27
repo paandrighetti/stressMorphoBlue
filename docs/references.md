@@ -192,7 +192,7 @@ framework. Definitions of all specialised terms used below are in
 
 ### F.1 rsETH incident (April 2026)
 
-- Aave governance, *rsETH incident, 2026-04-18*:
+- Aave governance, *rsETH incident of 18 April 2026*:
   https://governance.aave.com/t/rseth-incident-2026-04-18/24481
 - Aave governance, *rsETH Incident Report (April 20, 2026)*:
   https://governance.aave.com/t/rseth-incident-report-april-20-2026/24580

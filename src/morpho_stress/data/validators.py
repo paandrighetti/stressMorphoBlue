@@ -1,4 +1,4 @@
-"""Pandera schemas — runtime validation with range and invariant checks.
+"""Pandera schemas, runtime validation with range and invariant checks.
 
 These complement the PyArrow type-only schemas in `schemas.py`. Pandera
 schemas validate semantic invariants:
@@ -241,7 +241,7 @@ def validate(df: T, schema_name: str) -> T:
     """Validate a DataFrame against the named Pandera schema.
 
     Raises ``pandera.errors.SchemaError`` on violation. Returns the (unchanged)
-    DataFrame on success — convenient for chaining.
+    DataFrame on success, convenient for chaining.
     """
     if schema_name not in REGISTRY:
         raise KeyError(f"Unknown pandera schema: {schema_name}")

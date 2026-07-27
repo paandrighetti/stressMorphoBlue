@@ -446,7 +446,7 @@ percentiles.
 
 ### 5.5 Distributional-assumption health check
 
-Empirical distributions on 12 months are **weak in the tail** ,
+Empirical distributions on 12 months are **weak in the tail**,
 particularly for assets with short history. Mitigations:
 
 - *Block bootstrap* with 24-hour block size to preserve

@@ -92,6 +92,6 @@ class RPCClient:
 def safe_block(latest: int, reorg_buffer: int = 32) -> int:
     """Return the most recent block considered safe from reorgs.
 
-    Ethereum reorg depth in practice is 6–12 blocks; we use 32 for a wide margin.
+    Ethereum reorg depth in practice is 6-12 blocks; we use 32 for a wide margin.
     """
     return max(0, latest - reorg_buffer)

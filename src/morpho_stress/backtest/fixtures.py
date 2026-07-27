@@ -1,9 +1,9 @@
 """Backtest fixture loader, reads versioned event fixtures from disk.
 
 Each event fixture is a directory under `data/fixtures/<event_id>/` with:
-    event.yaml  , metadata
-    market.json , Morpho Blue market parameters at T-1
-    prices.csv  , hourly oracle + market price series
+    event.yaml   : metadata
+    market.json  : Morpho Blue market parameters at T-1
+    prices.csv   : hourly oracle + market price series
 
 The loader produces a fully-typed `EventFixture` ready for stress-testing.
 """

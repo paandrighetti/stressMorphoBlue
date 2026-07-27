@@ -118,7 +118,7 @@ CHAINLINK_ABI = [
 ]
 
 
-# Morpho IOracle interface — every oracle attached to a Morpho Blue market
+# Morpho IOracle interface: every oracle attached to a Morpho Blue market
 # implements this. Returns the price of 1 unit of collateral quoted in 1 unit
 # of loan asset, scaled by 1e36 + loan_decimals - collateral_decimals.
 # This is the canonical interface; works for MorphoChainlinkOracleV2,
