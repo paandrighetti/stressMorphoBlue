@@ -55,15 +55,17 @@ the 2022 to 2026 window. Each event is packaged as a versioned
 *fixture* under `data/fixtures/<event-id>/`, comprising:
 
 - `event.yaml`, event metadata (date, $t_0$, affected markets,
-  summary);
+  source attribution, summary);
 - `prices.csv`, collateral price time series (oracle and market) for
   $\pm 5$ days around the event;
-- `market.json`, affected market state at $t_0 - 1$ day (snapshot);
-- `positions.csv`, borrower positions on those markets at $t_0 - 1$
-  day;
-- `dex_slippage.csv`, Uniswap V3 historical swaps for slippage
-  calibration;
-- `sources.md`, full source attribution per data point.
+- `market.json`, affected market state at $t_0 - 1$ day (snapshot).
+
+Position books and exit-depth curves are not stored per fixture. The
+backtest reconstructs the borrower distribution from the market state and
+applies the slippage curves declared in `notebooks/phase4_demo.py` and
+`scripts/generate_backtest_table.py`, which are the single place those
+curves are defined. Source attribution lives in the `sources` list inside
+each `event.yaml` rather than in a separate file.
 
 ### 2.1 rsETH incident-inspired fixture (April 2026): primary anchor
 
@@ -175,7 +177,7 @@ notes: |
 Sampled at hourly cadence within the window. Source attribution per
 row.
 
-### 4.3 `markets.json`
+### 4.3 `market.json`
 
 ```json
 {
@@ -197,19 +199,14 @@ The `lltv` field denotes the liquidation loan-to-value threshold,
 abbreviated `LLTV` in the on-chain Solidity code by Morpho Labs and
 preserved here for compatibility.
 
-### 4.4 `dex_slippage.csv`
+### 4.4 Slippage calibration
 
-Historical Uniswap V3 swaps for the affected collateral. Used to
-calibrate the slippage curve $\pi(C, V)$ at the time of the event
-(not today's liquidity).
-
-| `swap_ts` | `collateral_symbol` | `volume_native` | `volume_usd` | `oracle_price` | `realized_price` | `slippage_bps` | source |
-|---|---|---|---|---|---|---|---|
-| ... | ... | ... | ... | ... | ... | ... | `uniswap_v3:0xabc...` |
-
-Slippage in `slippage_bps` is in basis points (1 basis point = 0.01%).
-
----
+Exit-depth curves are not stored per fixture. Each event is run against an
+explicit `SlippageCurve` declared in `scripts/generate_backtest_table.py`,
+alongside the identical declaration in `notebooks/phase4_demo.py`. Keeping
+the curves in code rather than in a data file means the published table and
+the reproduction notebook cannot drift apart, which is the failure mode this
+document is written to prevent.
 
 ## 5. Validation criteria: pass-or-fail rules
 

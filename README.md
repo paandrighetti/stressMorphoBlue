@@ -72,7 +72,6 @@ stressMorphoBlue/
 │   ├── DATA.md              # Data architecture
 │   ├── BACKTEST.md          # Backtest specification
 │   ├── REPORT.md            # Public writeup (Mirror.xyz-ready)
-│   ├── BENCHMARK.md         # Comparison vs LlamaRisk / Block Analitica / Gauntlet / ChaosLabs
 │   └── references.md        # Annotated bibliography
 ├── src/                     # Python implementation
 ├── data/                    # Local Parquet cache (gitignored) and event fixtures
