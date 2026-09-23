@@ -1,0 +1,62 @@
+name: dbt models and data tests
+
+on:
+  push:
+    paths:
+      - "dbt/**"
+      - "docs/evaluation_results.csv"
+      - "docs/evaluation_summary.json"
+      - "markets_top.yaml"
+      - "data/fixtures/**"
+      - ".github/workflows/dbt.yml"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dbt:
+    name: dbt build on the fixture cache
+    runs-on: ubuntu-latest
+    env:
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+      MORPHO_CACHE_DIR: ${{ github.workspace }}/dbt/fixtures/cache
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned dbt and fixture dependencies
+        run: pip install -r dbt/requirements.txt
+
+      - name: Seeds must match markets_top.yaml and docs/evaluation_summary.json
+        run: |
+          python dbt/scripts/sync_seeds.py
+          git diff --exit-code -- dbt/seeds
+
+      - name: Build the synthetic fixture cache
+        run: python dbt/scripts/build_fixture_cache.py --out "$MORPHO_CACHE_DIR"
+
+      - name: dbt build (seeds, models, unit test, data tests)
+        working-directory: dbt
+        run: |
+          dbt build --profiles-dir . \
+            --vars '{monitored_only: false, activity_window_start: 2000-01-01, liquidation_window_start: 2000-01-01}'
+
+      - name: dbt docs generate
+        working-directory: dbt
+        run: dbt docs generate --profiles-dir . --vars '{monitored_only: false}'
+
+      - name: Upload the documentation site
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-docs
+          path: |
+            dbt/target/index.html
+            dbt/target/catalog.json
+            dbt/target/manifest.json

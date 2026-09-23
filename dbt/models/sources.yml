@@ -1,0 +1,46 @@
+version: 2
+
+sources:
+  - name: morpho_cache
+    description: >
+      Layer 1, raw. The Parquet cache written by the acquisition scripts (scripts/fetch_*.py),
+      one canonical source per table as specified in docs/DATA.md. Files are gitignored in the
+      parent repository; CI materialises a small synthetic cache with dbt/scripts/build_fixture_cache.py.
+      Amounts are already decimal-normalised by the fetchers (loan-asset or collateral-asset units).
+      Balances come from eth_call state reads; they are never rebuilt from event flows.
+    schema: morpho_raw
+    meta:
+      # dbt-duckdb reads the files in place; {name} is substituted per table.
+      # MORPHO_CACHE_DIR points CI at the synthetic fixture cache.
+      external_location: "read_parquet('{{ env_var('MORPHO_CACHE_DIR', '../data/cache') }}/{name}.parquet')"
+    tables:
+      - name: markets
+        description: Immutable Morpho Blue market parameters, one row per market (CreateMarket event).
+      - name: market_state
+        description: Market state sampled at a 6-hour cadence from contract state (eth_call), denser around stress events.
+      - name: events_supply
+        description: Decoded Supply events, amounts in loan-asset units.
+      - name: events_withdraw
+        description: Decoded Withdraw events, amounts in loan-asset units.
+      - name: events_borrow
+        description: Decoded Borrow events, amounts in loan-asset units.
+      - name: events_repay
+        description: Decoded Repay events, amounts in loan-asset units.
+      - name: events_liquidate
+        description: Decoded Liquidate events. repaid and bad debt in loan-asset units, seized in collateral-asset units.
+      - name: positions
+        description: Per (market, borrower) position snapshots at sampled blocks.
+      - name: oracle_prices
+        description: Per-market oracle price series read from the oracle the contract itself uses.
+
+  - name: publication
+    description: >
+      Frozen evaluation outputs of the Python engine (scripts/run_evaluation.py), pinned by
+      docs/evaluation_manifest.json. alpha_star, tiers and Monte Carlo probabilities are produced
+      there and only there: SQL passes them through and never recomputes them.
+    schema: morpho_raw
+    tables:
+      - name: evaluation_results
+        description: One row per evaluated market at the publication block (docs/evaluation_results.csv).
+        meta:
+          external_location: "read_csv('../docs/evaluation_results.csv', header = true)"

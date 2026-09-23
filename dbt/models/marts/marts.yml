@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: mart_market_registry
+    description: Layer 4, marts. Reference table of markets with roster membership and publication exclusions (Dune Q1).
+    columns:
+      - name: market_id
+        data_tests: [unique, not_null]
+      - name: is_monitored
+        data_tests: [not_null]
+
+  - name: mart_stress_evaluation
+    description: >
+      Publication table (docs/evaluation_results.csv) enriched with market parameters and the pinned
+      cached state. All stress figures are Python engine outputs passed through unchanged;
+      tests/assert_alpha_star_passthrough.sql and tests/assert_tier_consistent_with_alpha_star.sql
+      guard the pass-through and the tier thresholds.
+    columns:
+      - name: market_id
+        data_tests: [unique, not_null]
+      - name: alpha_star
+        description: Share of supply absorbable in 24 hours before the market turns illiquid. Never recomputed in SQL.
+        data_tests:
+          - not_null
+          - bounds:
+              arguments:
+                lower: 0
+                upper: 1
+      - name: tier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['red', 'yellow', 'green']
+      - name: supply_assets
+        description: Supply at the state block in the market's own loan asset. Not comparable across loan assets.
+        data_tests: [not_null]
+
+  - name: mart_roster_coverage
+    description: Each of the 26 monitored markets is evaluated or excluded with a documented reason.
+    columns:
+      - name: market_id
+        data_tests: [unique, not_null]
+      - name: coverage_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['evaluated', 'excluded']
+
+  - name: mart_flows_weekly
+    description: Dashboard panel, weekly gross flows per loan asset (Dune Q4). One series per loan asset, no total line.
+    columns:
+      - name: loan_asset_symbol
+        data_tests: [not_null]
+
+  - name: mart_liquidations_daily
+    description: Dashboard panel, daily liquidations on the roster with decimal-normalised amounts (Dune Q2).
+    columns:
+      - name: market_id
+        data_tests: [not_null]
+
+  - name: mart_borrower_concentration
+    description: Dashboard panel, borrower activity concentration per market (Dune Q3). Activity proxy, not current balances.
+    columns:
+      - name: market_id
+        data_tests: [unique, not_null]

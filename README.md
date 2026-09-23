@@ -1,6 +1,7 @@
 # Morpho Blue: Liquidity Stress Testing Framework
 
 [![tests](https://github.com/paandrighetti/stressMorphoBlue/actions/workflows/tests.yml/badge.svg)](https://github.com/paandrighetti/stressMorphoBlue/actions/workflows/tests.yml)
+[![dbt](https://github.com/paandrighetti/stressMorphoBlue/actions/workflows/dbt.yml/badge.svg)](https://github.com/paandrighetti/stressMorphoBlue/actions/workflows/dbt.yml)
 
 > A liquidity stress testing framework for Morpho Blue isolated
 > lending markets, adapted from Basel III
@@ -75,6 +76,7 @@ stressMorphoBlue/
 │   └── references.md        # Annotated bibliography
 ├── src/                     # Python implementation
 ├── data/                    # Local Parquet cache (gitignored) and event fixtures
+├── dbt/                     # dbt port of the SQL layer: four layers, tests, docs (dbt/README.md)
 ├── notebooks/               # Reproducible analyses
 ├── scripts/                 # Data-acquisition + analysis entry points
 │   ├── select_markets.py            # Top N markets by TVL
@@ -193,6 +195,7 @@ changes from the superseded v0.3 framework.
 
 - **Live Dune dashboard** (TVL, top markets, liquidation flows): https://dune.com/bandulf/morpho-blue-liquidity-stress
 - **Published article**: [`MIRROR_ARTICLE.md`](./MIRROR_ARTICLE.md)
+- **dbt models** (tested SQL layer, DuckDB and BigQuery targets): [`dbt/README.md`](./dbt/README.md)
 
 ---
 

@@ -1,0 +1,50 @@
+name: morpho_stress
+version: 1.0.0
+config-version: 2
+profile: morpho_stress
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Generic test arguments are nested under `arguments:` (dbt >= 1.10 syntax).
+# Pinned in requirements.txt (dbt-core 1.11.15); also passes on 1.12.5.
+require-dbt-version: [">=1.11.0", "<2.0.0"]
+
+vars:
+  # Publication block pinned in docs/evaluation_manifest.json. The pinned
+  # state read (int_morpho__market_state_pinned) never goes past it.
+  state_block: 25545086
+  # Windows used by the dashboard panels (dune/dune_queries.sql, Q2 to Q4).
+  liquidation_window_start: "2025-01-01"
+  activity_window_start: "2026-01-01"
+  # Restrict event-derived marts to the 26 monitored markets (markets_top.yaml).
+  # CI sets it to false because the fixture cache holds hypothetical markets.
+  monitored_only: true
+
+models:
+  morpho_stress:
+    +materialized: view
+    staging:
+      +schema: staging
+    intermediate:
+      +schema: intermediate
+    marts:
+      +schema: marts
+      +materialized: table
+
+seeds:
+  morpho_stress:
+    +schema: seeds
+    roster_markets:
+      +column_types:
+        market_id: varchar
+        roster_rank: integer
+    evaluation_exclusions:
+      +column_types:
+        market_id: varchar
+        market: varchar
+        reason: varchar

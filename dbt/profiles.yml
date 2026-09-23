@@ -1,0 +1,20 @@
+# Run dbt from this directory with `--profiles-dir .` (or copy to ~/.dbt/).
+morpho_stress:
+  target: duckdb
+  outputs:
+    # Local and CI target. Reads the Parquet cache in place, no load step.
+    duckdb:
+      type: duckdb
+      path: "target/morpho_stress.duckdb"
+      threads: 4
+    # Production-shaped target. Load data/cache/*.parquet into the dataset
+    # named in models/sources.yml (see README, "BigQuery") before running.
+    bigquery:
+      type: bigquery
+      method: service-account
+      project: "{{ env_var('GCP_PROJECT') }}"
+      dataset: morpho_stress
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      location: EU
+      threads: 4
+      priority: interactive

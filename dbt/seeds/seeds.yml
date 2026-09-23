@@ -1,0 +1,17 @@
+version: 2
+
+seeds:
+  - name: roster_markets
+    description: The 26 monitored markets, generated from markets_top.yaml by dbt/scripts/sync_seeds.py. CI fails on drift.
+    columns:
+      - name: market_id
+        data_tests: [unique, not_null]
+      - name: roster_rank
+        data_tests: [unique, not_null]
+  - name: evaluation_exclusions
+    description: Monitored markets excluded from the publication with their reason, generated from docs/evaluation_summary.json.
+    columns:
+      - name: market_id
+        data_tests: [unique, not_null]
+      - name: reason
+        data_tests: [not_null]

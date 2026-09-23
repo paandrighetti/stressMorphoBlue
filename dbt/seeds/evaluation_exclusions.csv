@@ -1,0 +1,3 @@
+market_id,market,reason
+0x3274643db77a064abd3bc851de77556a4ad2e2f502f4f0c80845fa8f909ecf0b,sUSDS/USDT,"no slippage curve (insufficient slippage observations: 7 usable, 8 required)"
+0x23a7d0ff682b323363fb8ba58327ed87001f6306e09b7fd7413bbe4698e749c8,msY/USDC,no oracle price series (oracle interface not supported this window)

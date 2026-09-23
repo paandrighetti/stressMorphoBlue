@@ -1,0 +1,116 @@
+version: 2
+
+models:
+  - name: stg_morpho__markets
+    description: Layer 2, staging. One row per Morpho Blue market, typed and lower-cased, with the collateral/loan label used by the publication table.
+    columns:
+      - name: market_id
+        description: Morpho Blue market id (32-byte hash, 0x-prefixed, lower case).
+        data_tests: [unique, not_null]
+      - name: market_label
+        description: collateral_symbol/loan_symbol, the convention of docs/evaluation_results.csv.
+        data_tests: [not_null]
+      - name: lltv
+        description: Liquidation loan-to-value threshold, 0 to 1 (already divided by 1e18 by the fetcher).
+        data_tests:
+          - not_null
+      - name: loan_asset_decimals
+        data_tests: [not_null]
+      - name: collateral_asset_decimals
+        data_tests: [not_null]
+
+  - name: stg_morpho__market_state
+    description: Contract state samples per market (eth_call at pinned blocks). This is the only source of balances in the project.
+    columns:
+      - name: market_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_morpho__markets')
+                field: market_id
+      - name: block_number
+        data_tests: [not_null]
+      - name: total_supply_assets
+        description: Loan asset supplied, loan-asset units (decimals applied).
+        data_tests: [not_null]
+      - name: total_borrow_assets
+        description: Loan asset borrowed, loan-asset units.
+        data_tests: [not_null]
+      - name: utilization
+        description: total_borrow_assets / total_supply_assets, null when supply is zero.
+
+  - name: stg_morpho__events_supply
+    description: Decoded Supply events, one row per log.
+    columns: &event_columns
+      - name: event_key
+        description: tx_hash-log_index, natural key of a decoded log.
+        data_tests: [unique, not_null]
+      - name: market_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_morpho__markets')
+                field: market_id
+      - name: assets
+        description: Amount in loan-asset units (decimals applied by the fetcher).
+        data_tests: [not_null]
+  - name: stg_morpho__events_withdraw
+    description: Decoded Withdraw events, one row per log.
+    columns: *event_columns
+  - name: stg_morpho__events_borrow
+    description: Decoded Borrow events, one row per log.
+    columns: *event_columns
+  - name: stg_morpho__events_repay
+    description: Decoded Repay events, one row per log.
+    columns: *event_columns
+
+  - name: stg_morpho__events_liquidate
+    description: Decoded Liquidate events. repaid_assets and bad_debt_assets are in loan-asset units, seized_assets in collateral-asset units.
+    columns:
+      - name: event_key
+        data_tests: [unique, not_null]
+      - name: market_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_morpho__markets')
+                field: market_id
+      - name: bad_debt_assets
+        description: Bad debt booked by the contract in loan-asset units. Non-zero values are the falsification surface of the solvency claim.
+        data_tests: [not_null]
+
+  - name: stg_morpho__positions
+    description: Per (market, borrower) snapshots at sampled blocks.
+    columns:
+      - name: market_id
+        data_tests: [not_null]
+      - name: borrower
+        data_tests: [not_null]
+
+  - name: stg_morpho__oracle_prices
+    description: Oracle price series per market, price expressed as collateral per loan asset.
+    columns:
+      - name: market_id
+        data_tests: [not_null]
+      - name: price_collateral_per_loan
+        data_tests: [not_null]
+
+  - name: stg_publication__evaluation_results
+    description: Typed pass-through of docs/evaluation_results.csv. No figure is transformed.
+    columns:
+      - name: market_id
+        data_tests: [unique, not_null]
+      - name: alpha_star
+        description: Survival frontier, share of supply absorbable in 24 hours. Python engine output, never recomputed in SQL.
+        data_tests: [not_null]
+      - name: tier
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['red', 'yellow', 'green']
+      - name: state_block
+        data_tests: [not_null]

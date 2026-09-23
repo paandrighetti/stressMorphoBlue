@@ -1,0 +1,14 @@
+# Exact versions the project is tested with. CI and local runs install this file,
+# so a new dbt release cannot change behaviour without a deliberate bump here.
+# dbt-core 1.11 rather than 1.12: 1.12 pulls dbt-core-experimental-parser, whose
+# Windows binary is downloaded from GitHub at install time; 1.11 installs from
+# PyPI wheels only. The models also pass unchanged on dbt-core 1.12.5.
+dbt-core==1.11.15
+dbt-duckdb==1.11.0
+duckdb==1.5.5
+
+# Fixture cache builder (scripts/build_fixture_cache.py) and seed sync (scripts/sync_seeds.py).
+# Same floors as the parent project's pyproject.toml.
+pyarrow>=15.0
+numpy>=1.26
+pyyaml>=6.0

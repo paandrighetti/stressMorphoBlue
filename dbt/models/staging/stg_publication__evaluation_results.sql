@@ -1,0 +1,33 @@
+-- Pass-through of the frozen publication table. Types are pinned here so that
+-- downstream models and tests do not depend on CSV auto-detection.
+select
+    lower(market_id)                                            as market_id,
+    market                                                      as market_label,
+    cast(block as {{ dbt.type_bigint() }})                      as state_block,
+    supply_assets,
+    utilization,
+    cast(n_positions as {{ dbt.type_bigint() }})                as n_positions,
+    alpha,
+    alpha_star,
+    lsr24,
+    tti_hours,
+    p_bad_debt,
+    p_insolvency,
+    insolvency_p99_pct,
+    bad_debt_p99_pct,
+    drawdown_source,
+    cast(drawdown_observations as {{ dbt.type_bigint() }})      as drawdown_observations,
+    tier,
+    severity,
+    tti_severity,
+    solvency_severity,
+    attention_severity,
+    extreme_drawdown_used,
+    lsr24_extreme,
+    bad_debt_extreme_realized_pct,
+    insolvency_extreme_pct,
+    cast(extreme_illiq_fail as {{ dbt.type_boolean() }})        as extreme_illiq_fail,
+    cast(extreme_insolv_fail as {{ dbt.type_boolean() }})       as extreme_insolv_fail,
+    cast(extreme_fail as {{ dbt.type_boolean() }})              as extreme_fail,
+    notes
+from {{ source('publication', 'evaluation_results') }}
