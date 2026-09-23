@@ -90,6 +90,7 @@ query MarketEvents(
   ) {
     items {
       hash
+      logIndex
       timestamp
       blockNumber
       type
@@ -127,6 +128,10 @@ def _normalize_event_row(
     """
     try:
         block_ts = datetime.fromtimestamp(int(raw["timestamp"]), tz=timezone.utc)
+        # (tx_hash, log_index) is the natural key of an event: one transaction
+        # can emit several events of the same type (vault reallocations,
+        # bundler multicalls), so the log index is essential.
+        log_index = int(raw["logIndex"])
     except (KeyError, ValueError, TypeError):
         return None
 
@@ -135,7 +140,7 @@ def _normalize_event_row(
         "block_number": int(raw.get("blockNumber") or 0),
         "block_ts": block_ts,
         "tx_hash": raw.get("hash") or "0x",
-        "log_index": 0,  # Morpho API doesn't expose logIndex; use 0 as placeholder
+        "log_index": log_index,
     }
 
     data = raw.get("data") or {}
@@ -193,6 +198,24 @@ def _normalize_event_row(
         }
     else:
         raise ValueError(f"Unknown event type: {event_type}")
+
+
+def _dedupe_events(rows: list[dict]) -> tuple[list[dict], int]:
+    """Keep one row per log (tx_hash, log_index); return the rows and the drop count.
+
+    Skip pagination over a newest-first listing re-reads rows whenever new
+    transactions land between two pages; those repeats are identical and are
+    dropped. Two different payloads under one key would be a source defect,
+    so that case raises instead of silently picking one.
+    """
+    kept: dict[tuple[str, int], dict] = {}
+    for row in rows:
+        key = (row["tx_hash"], row["log_index"])
+        if key not in kept:
+            kept[key] = row
+        elif kept[key] != row:
+            raise ValueError(f"conflicting payloads for event {key}")
+    return list(kept.values()), len(rows) - len(kept)
 
 
 def _fetch_event_type_for_market(
@@ -328,6 +351,12 @@ def main(config_path: str, markets_input: str, output_dir: str, event_types: str
                     len(rows),
                 )
                 all_rows.extend(rows)
+
+            all_rows, n_repeats = _dedupe_events(all_rows)
+            if n_repeats:
+                logger.info(
+                    "  dropped %d repeated %s rows (pagination overlap)", n_repeats, event_type
+                )
 
             schema_name = f"events_{event_type}"
             output_path = output_root / f"{schema_name}.parquet"
