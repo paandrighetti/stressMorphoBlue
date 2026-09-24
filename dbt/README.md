@@ -26,8 +26,8 @@ target for the same models.
 |---|---|---|
 | 1. Raw | `models/sources.yml` | The Parquet cache (`data/cache/*.parquet`, one canonical source per table, schemas in `src/morpho_stress/data/schemas.py`) and the frozen publication CSV, read in place. |
 | 2. Staging | `models/staging/` | One model per source table: typing, lower-cased identifiers, natural keys (`event_key = tx_hash-log_index`), the `collateral/loan` market label. No joins, no business logic. |
-| 3. Intermediate | `models/intermediate/` | Unit discipline and windows: signed flow ledger, weekly flows per loan asset, daily liquidations, borrower activity concentration, state pinned at the publication block. |
-| 4. Marts | `models/marts/` | Consumer tables: market registry, enriched publication table, roster coverage, and the three dashboard panels (Dune Q2, Q3, Q4). Materialised as tables. |
+| 3. Intermediate | `models/intermediate/` | Unit discipline and windows: signed flow ledger, weekly flows per loan asset, daily liquidations, borrower activity concentration, state pinned at the publication block, interest booked between two state reads. |
+| 4. Marts | `models/marts/` | Consumer tables: market registry, enriched publication table, roster coverage, the three dashboard panels (Dune Q2, Q3, Q4) and daily protocol fees. Materialised as tables. |
 
 Lineage, column descriptions and test coverage are in the generated docs (`dbt docs generate`).
 
@@ -39,8 +39,11 @@ Lineage, column descriptions and test coverage are in the generated docs (`dbt d
   sample timestamps, decimal-normalised flow units, no cross-asset row in the flows panel, full roster
   coverage (every monitored market is evaluated or excluded with a documented reason), and the two
   publication guards above.
-* One dbt unit test (`flow_sign_convention`) pins the sign convention of the flow ledger on mocked
-  inputs, independent of any data.
+* Fees checks (`docs/FEES.md`, section 4): the borrow and supply ledgers give the same interest on
+  every covered interval, interest is never negative, fee shares minted match interest times fee,
+  and the daily split conserves interest.
+* dbt unit tests pin logic on mocked inputs, independent of any data: the sign convention of the
+  flow ledger, borrower shares, the interest ledgers and the UTC day split of fees.
 
 ## Running it
 
@@ -57,14 +60,20 @@ MORPHO_CACHE_DIR=$PWD/fixtures/cache dbt build --profiles-dir . \
   --vars '{monitored_only: false, activity_window_start: 2000-01-01, liquidation_window_start: 2000-01-01}'
 
 dbt docs generate --profiles-dir . && dbt docs serve --profiles-dir .
+
+# After a build on the real cache, from the repository root: daily fees snapshot.
+python dbt/scripts/export_fees_snapshot.py   # -> docs/_generated/fees_snapshot.md
 ```
 
 `--vars` is parsed as YAML, so the quote-free form above works unchanged in PowerShell
-(set the cache directory there with `$env:MORPHO_CACHE_DIR = "$PWD/fixtures/cache"`).
+(set the cache directory there with `$env:MORPHO_CACHE_DIR = "$PWD/fixtures/cache"`). The DuckDB
+target runs its session in UTC (`profiles.yml`), so daily and weekly models cut days at 00:00 UTC
+whatever the machine's time zone.
 
 Variables (`dbt_project.yml`): `state_block` (publication block from `docs/evaluation_manifest.json`),
 `liquidation_window_start` and `activity_window_start` (dashboard windows), `monitored_only`
-(restrict event-derived models to the 26 markets of `markets_top.yaml`).
+(restrict event-derived models to the 26 markets of `markets_top.yaml`), `stuck_utilization`
+(utilization at which a state read counts as pinned at full utilization in the fees models).
 
 Seeds are generated, not hand-edited: `scripts/sync_seeds.py` rebuilds `roster_markets.csv` from
 `markets_top.yaml` and `evaluation_exclusions.csv` from `docs/evaluation_summary.json`; CI fails on drift.
@@ -74,9 +83,11 @@ Seeds are generated, not hand-edited: `scripts/sync_seeds.py` rebuilds `roster_m
 `scripts/build_fixture_cache.py` derives a small deterministic cache (seed 42) from the committed
 backtest fixtures (`data/fixtures/*/market.json` and `prices.csv`): the three hypothetical markets,
 their snapshot state, hourly oracle prices, simulated flows, positions and two liquidations (one with
-bad debt, so the liquidation panel and its tests see a non-zero value). It uses the exact PyArrow
-schemas of the acquisition layer, so a schema change breaks CI here as well as in the Python tests.
-Nothing in it is a finding.
+bad debt, so the liquidation panel and its tests see a non-zero value). State samples come from a
+ledger that follows the contract's accounting (interest booked at each transaction, fee shares, bad
+debt on both sides), with a 10 % fee on one market, so the fees models and their checks run on CI
+as on the real cache. It uses the exact PyArrow schemas of the acquisition layer, so a schema change
+breaks CI here as well as in the Python tests. Nothing in it is a finding.
 
 ## BigQuery
 

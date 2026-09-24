@@ -71,6 +71,7 @@ stressMorphoBlue/
 │   ├── METHODOLOGY.md       # Historical v0.3 design note and retained foundations
 │   ├── SCENARIOS.md         # Stress-scenario specification
 │   ├── DATA.md              # Data architecture
+│   ├── FEES.md              # Protocol fees and revenue, Token Terminal definitions
 │   ├── BACKTEST.md          # Backtest specification
 │   ├── REPORT.md            # Public writeup (Mirror.xyz-ready)
 │   └── references.md        # Annotated bibliography
@@ -196,6 +197,7 @@ changes from the superseded v0.3 framework.
 - **Live Dune dashboard** (TVL, top markets, liquidation flows): https://dune.com/bandulf/morpho-blue-liquidity-stress
 - **Published article**: [`MIRROR_ARTICLE.md`](./MIRROR_ARTICLE.md)
 - **dbt models** (tested SQL layer, DuckDB and BigQuery targets): [`dbt/README.md`](./dbt/README.md)
+- **Protocol fees and revenue** (daily, Token Terminal definitions, reconciled on two ledgers): [`docs/FEES.md`](./docs/FEES.md)
 
 ---
 

@@ -63,3 +63,73 @@ models:
     columns:
       - name: market_id
         data_tests: [unique, not_null]
+
+  - name: mart_protocol_fees_daily
+    description: >
+      Daily Morpho Blue fees per market in Token Terminal's terms: fees (interest paid by
+      borrowers), supply-side fees (the suppliers' part) and revenue (the protocol's part, from
+      the market fee). Interest booked while a market is pinned at full utilization and the
+      liquidation incentive are reported apart. One row per UTC day and market, amounts in the
+      market's loan asset. Methodology in docs/FEES.md.
+    columns:
+      - name: day
+        data_tests: [not_null]
+      - name: market_id
+        data_tests: [not_null]
+      - name: day_coverage
+        description: Share of the day covered by complete intervals. Below 1 at the edges of the event window.
+        data_tests:
+          - not_null
+          - bounds:
+              arguments:
+                lower: 0
+                upper: 1
+      - name: fees_loan_units
+        description: Interest paid by borrowers, stuck intervals excluded.
+        data_tests: [not_null]
+      - name: supply_side_fees_loan_units
+        description: fees - revenue, the interest that reaches suppliers.
+        data_tests: [not_null]
+      - name: revenue_loan_units
+        description: The protocol's share of the fees (interest * market fee).
+        data_tests: [not_null]
+      - name: stuck_interest_loan_units
+        description: Interest booked between two reads at full utilization (var stuck_utilization), not counted in fees.
+        data_tests: [not_null]
+      - name: liquidation_incentive_loan_units
+        description: repaid * (LIF - 1), the collateral value liquidators receive above the debt they repay, at the contract's oracle price.
+        data_tests: [not_null]
+
+unit_tests:
+  - name: fees_split_across_utc_days_pro_rata
+    description: >
+      An interval from 22:00 to 04:00 puts one third of its interest on the first day and two
+      thirds on the second. A stuck interval feeds stuck_interest_loan_units only, an uncovered
+      one feeds nothing. A liquidation adds repaid * (LIF - 1) on its day, including a day with
+      no interval.
+    model: mart_protocol_fees_daily
+    given:
+      - input: ref('int_morpho__interest_intervals')
+        rows:
+          - {market_id: '0xaaa', ts_start: '2026-06-20 22:00:00', ts_end: '2026-06-21 04:00:00', interest: 90.0, revenue: 9.0, is_covered: true, is_stuck: false}
+          - {market_id: '0xbbb', ts_start: '2026-06-20 22:00:00', ts_end: '2026-06-21 04:00:00', interest: 60.0, revenue: 0.0, is_covered: true, is_stuck: true}
+          - {market_id: '0xaaa', ts_start: '2026-06-19 22:00:00', ts_end: '2026-06-20 04:00:00', interest: 999.0, revenue: 0.0, is_covered: false, is_stuck: false}
+      - input: ref('stg_morpho__events_liquidate')
+        rows:
+          - {market_id: '0xaaa', block_ts: '2026-06-20 23:00:00', repaid_assets: 1000.0}
+          - {market_id: '0xaaa', block_ts: '2026-06-22 12:00:00', repaid_assets: 1000.0}
+      - input: ref('stg_morpho__markets')
+        rows:
+          - {market_id: '0xaaa', market_label: 'WBTC/USDC', loan_asset_symbol: 'USDC', lltv: 0.86}
+          - {market_id: '0xbbb', market_label: 'msY/USDC', loan_asset_symbol: 'USDC', lltv: 0.915}
+      - input: ref('roster_markets')
+        rows:
+          - {market_id: '0xaaa', roster_rank: 1}
+          - {market_id: '0xbbb', roster_rank: 2}
+    expect:
+      rows:
+        - {day: '2026-06-20 00:00:00', market_id: '0xaaa', day_coverage: 0.08333333333333333, fees_loan_units: 30.0, supply_side_fees_loan_units: 27.0, revenue_loan_units: 3.0, stuck_interest_loan_units: 0.0, n_liquidations: 1, liquidation_incentive_loan_units: 43.84133611691033}
+        - {day: '2026-06-21 00:00:00', market_id: '0xaaa', day_coverage: 0.16666666666666666, fees_loan_units: 60.0, supply_side_fees_loan_units: 54.0, revenue_loan_units: 6.0, stuck_interest_loan_units: 0.0, n_liquidations: 0, liquidation_incentive_loan_units: 0.0}
+        - {day: '2026-06-22 00:00:00', market_id: '0xaaa', day_coverage: 0.0, fees_loan_units: 0.0, supply_side_fees_loan_units: 0.0, revenue_loan_units: 0.0, stuck_interest_loan_units: 0.0, n_liquidations: 1, liquidation_incentive_loan_units: 43.84133611691033}
+        - {day: '2026-06-20 00:00:00', market_id: '0xbbb', day_coverage: 0.08333333333333333, fees_loan_units: 0.0, supply_side_fees_loan_units: 0.0, revenue_loan_units: 0.0, stuck_interest_loan_units: 20.0, n_liquidations: 0, liquidation_incentive_loan_units: 0.0}
+        - {day: '2026-06-21 00:00:00', market_id: '0xbbb', day_coverage: 0.16666666666666666, fees_loan_units: 0.0, supply_side_fees_loan_units: 0.0, revenue_loan_units: 0.0, stuck_interest_loan_units: 40.0, n_liquidations: 0, liquidation_incentive_loan_units: 0.0}

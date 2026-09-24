@@ -7,6 +7,10 @@ morpho_stress:
       type: duckdb
       path: "target/morpho_stress.duckdb"
       threads: 4
+      # Daily models truncate timestamps to UTC days; DuckDB would otherwise
+      # use the machine's time zone.
+      settings:
+        TimeZone: UTC
     # Production-shaped target. Load data/cache/*.parquet into the dataset
     # named in models/sources.yml (see README, "BigQuery") before running.
     bigquery:

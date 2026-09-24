@@ -68,6 +68,39 @@ models:
       - name: cached_state_block
         data_tests: [not_null]
 
+  - name: int_morpho__interest_intervals
+    description: >
+      Interest booked between two consecutive state reads of a market, from the contract's
+      accounting identities: once from the borrow ledger, once from the supply ledger, plus the
+      fee shares minted to the fee recipient from the share ledger. Only covered intervals
+      (inside the event window) have all their flows in the cache. See docs/FEES.md.
+    columns:
+      - name: market_id
+        data_tests: [not_null]
+      - name: block_end
+        data_tests: [not_null]
+      - name: interest
+        description: Interest paid by borrowers over the interval, from the borrow ledger, loan-asset units.
+        data_tests: [not_null]
+      - name: interest_supply_ledger
+        description: The same interest from the supply ledger; tests/assert_interest_ledgers_agree.sql compares the two.
+        data_tests: [not_null]
+      - name: revenue
+        description: interest * fee at the start of the interval, the protocol's share.
+        data_tests: [not_null]
+      - name: fee_shares_minted
+        description: Supply shares minted to the fee recipient, measured on the share ledger.
+      - name: accrued_from_unix
+        description: Market.lastUpdate at the first read. The interest of the interval accrued between this timestamp and accrued_to_unix.
+      - name: accrued_to_unix
+        description: Market.lastUpdate at the second read.
+      - name: is_covered
+        description: The interval lies between the first and the last cached event, so all its flows are in the cache.
+        data_tests: [not_null]
+      - name: is_stuck
+        description: Utilization at or above var stuck_utilization at both reads.
+        data_tests: [not_null]
+
 unit_tests:
   - name: flow_sign_convention
     description: Supply and borrow are positive, withdraw and repay negative, each on its ledger; amounts pass through untouched.
@@ -119,3 +152,39 @@ unit_tests:
     expect:
       rows:
         - {market_id: '0xaaa', n_active_borrowers: 3, top3_share: 1.0, top10_share: 1.0}
+
+  - name: interest_from_the_borrow_and_the_supply_ledgers
+    description: >
+      Two state reads around one event of each kind: both ledgers give an interest of 4, the
+      event at the start block belongs to the previous interval, fee shares come from the share
+      ledger and revenue is interest times the fee. A third read after the last cached event
+      makes an uncovered interval. A second market held at full utilization at both reads is
+      flagged stuck.
+    model: int_morpho__interest_intervals
+    given:
+      - input: ref('stg_morpho__market_state')
+        rows:
+          - {market_id: '0xaaa', block_number: 100, block_ts: '2026-06-20 00:00:00', total_supply_assets: 200.0, total_supply_shares: 200000000.0, total_borrow_assets: 100.0, utilization: 0.5, fee: 0.25, last_update_unix: 1781913000}
+          - {market_id: '0xaaa', block_number: 200, block_ts: '2026-06-20 06:00:00', total_supply_assets: 232.0, total_supply_shares: 231000000.0, total_borrow_assets: 117.0, utilization: 0.5, fee: 0.25, last_update_unix: 1781934000}
+          - {market_id: '0xaaa', block_number: 300, block_ts: '2026-06-20 12:00:00', total_supply_assets: 232.0, total_supply_shares: 231000000.0, total_borrow_assets: 117.0, utilization: 0.5, fee: 0.25, last_update_unix: 1781934000}
+          - {market_id: '0xbbb', block_number: 100, block_ts: '2026-06-20 00:00:00', total_supply_assets: 10.0, total_supply_shares: 10000000.0, total_borrow_assets: 10.0, utilization: 1.0, fee: 0.0, last_update_unix: 1781900000}
+          - {market_id: '0xbbb', block_number: 200, block_ts: '2026-06-20 06:00:00', total_supply_assets: 11.0, total_supply_shares: 10000000.0, total_borrow_assets: 11.0, utilization: 1.0, fee: 0.0, last_update_unix: 1781930000}
+      - input: ref('int_morpho__flow_events')
+        rows:
+          - {market_id: '0xaaa', block_number: 100, flow_type: 'supply',   amount_loan_units: 999.0, shares: 999000000.0}
+          - {market_id: '0xaaa', block_number: 150, flow_type: 'supply',   amount_loan_units: 50.0,  shares: 50000000.0}
+          - {market_id: '0xaaa', block_number: 160, flow_type: 'withdraw', amount_loan_units: 20.0,  shares: 20000000.0}
+          - {market_id: '0xaaa', block_number: 170, flow_type: 'borrow',   amount_loan_units: 30.0,  shares: 30000000.0}
+          - {market_id: '0xaaa', block_number: 200, flow_type: 'repay',    amount_loan_units: 10.0,  shares: 10000000.0}
+      - input: ref('stg_morpho__events_liquidate')
+        rows:
+          - {market_id: '0xaaa', block_number: 180, repaid_assets: 5.0, repaid_shares: 5000000.0, bad_debt_assets: 2.0}
+      - input: ref('roster_markets')
+        rows:
+          - {market_id: '0xaaa', roster_rank: 1}
+          - {market_id: '0xbbb', roster_rank: 2}
+    expect:
+      rows:
+        - {market_id: '0xaaa', block_start: 100, block_end: 200, accrued_from_unix: 1781913000, accrued_to_unix: 1781934000, n_events: 5, bad_debt: 2.0, interest: 4.0, interest_supply_ledger: 4.0, revenue: 1.0, fee_shares_minted: 1000000.0, is_covered: true, is_stuck: false}
+        - {market_id: '0xaaa', block_start: 200, block_end: 300, accrued_from_unix: 1781934000, accrued_to_unix: 1781934000, n_events: 0, bad_debt: 0.0, interest: 0.0, interest_supply_ledger: 0.0, revenue: 0.0, fee_shares_minted: 0.0, is_covered: false, is_stuck: false}
+        - {market_id: '0xbbb', block_start: 100, block_end: 200, accrued_from_unix: 1781900000, accrued_to_unix: 1781930000, n_events: 0, bad_debt: 0.0, interest: 1.0, interest_supply_ledger: 1.0, revenue: 0.0, fee_shares_minted: 0.0, is_covered: true, is_stuck: true}

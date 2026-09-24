@@ -24,6 +24,10 @@ vars:
   # Restrict event-derived marts to the 26 monitored markets (markets_top.yaml).
   # CI sets it to false because the fixture cache holds hypothetical markets.
   monitored_only: true
+  # Utilization at or above which a state read counts as pinned at full
+  # utilization. Interest booked between two such reads is reported apart
+  # from fees (mart_protocol_fees_daily, docs/FEES.md).
+  stuck_utilization: 0.999
 
 models:
   morpho_stress:
