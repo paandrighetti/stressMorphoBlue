@@ -1,8 +1,9 @@
 """scripts/fetch_events.py: fetch Morpho Blue events via the Morpho API.
 
-Uses the documented `transactions` query at api.morpho.org/graphql with
-`type_in` filter and `marketUniqueKey_in` filter (both validated against
-the Morpho docs schema).
+Uses the `marketTransactions` query at api.morpho.org/graphql with
+`marketUniqueKey_in`, `type_in` and `chainId_in` filters. The former
+`transactions` query was deprecated on 2026-04-23 and later removed
+(Morpho API changelog).
 
 Outputs:
     data/cache/events_supply.parquet
@@ -11,19 +12,23 @@ Outputs:
     data/cache/events_repay.parquet
     data/cache/events_liquidate.parquet
 
-Time-range filtering:
-    The Morpho API `transactions` query does NOT expose `timestamp_gte` /
-    `timestamp_lte` filters in its `where` clause. To respect the
-    config.range window, we fetch in reverse-chronological order and stop
-    as soon as we cross start_ts. The window is applied client-side
-    after fetching.
+Time-range filtering and pagination:
+    The config.range window is applied by the API (timestamp_gte and
+    timestamp_lte), and pages are chained with the API cursor (txHash and
+    logIndex of the last event read), newest first. Each (market, event type)
+    must return exactly the pageInfo.countTotal announced by the API, or the
+    fetch fails.
 
-    For long lookbacks (>3 months × 5 markets), this can be slow but
-    correct. For incremental updates, use a checkpoint mechanism
-    (not implemented here).
+    Skip pagination is not used: measured on 2026-09-24, the API returns
+    short pages (999 events for first: 1000) that read as the end of the
+    data, loses events that share a timestamp across page boundaries, and
+    rejects skip values beyond about 10,000. With the window applied
+    client-side on top of it, the fetch returned 0 supply and 0 withdraw
+    events for cbBTC/USDC on a one-month window holding 7,146 and 10,441.
 
 Schema reference:
     https://docs.morpho.org/tools/offchain/api/morpho/
+    https://docs.morpho.org/developers/api/changelog/
 
 Usage:
     python scripts/fetch_events.py --config config.local.yaml [--event-types supply,liquidate]
@@ -53,54 +58,67 @@ from morpho_stress.data.subgraph import SubgraphClient
 logger = logging.getLogger(__name__)
 
 
-# Mapping of internal event types to Morpho API TransactionType enum values
+# Mapping of internal event types to Morpho API MarketTransactionType enum values
 EVENT_TYPE_TO_API = {
-    "supply": "MarketSupply",
-    "withdraw": "MarketWithdraw",
-    "borrow": "MarketBorrow",
-    "repay": "MarketRepay",
-    "liquidate": "MarketLiquidation",
+    "supply": "Supply",
+    "withdraw": "Withdraw",
+    "borrow": "Borrow",
+    "repay": "Repay",
+    "liquidate": "Liquidation",
 }
 
 
-# GraphQL query: validated against the Morpho API as of July 2026.
-# Filters: marketUniqueKey_in (array), type_in (array of TransactionType enum).
-# We do NOT filter by timestamp in the query (not supported); apply
-# client-side after fetching.
+# GraphQL query on `marketTransactions`.
+# Filters: marketUniqueKey_in (array), type_in (array of MarketTransactionType
+# enum), chainId_in pinned to Ethereum mainnet, the only chain of the roster
+# and of the publication (docs/evaluation_manifest.json, chain_id 1), and the
+# config.range window (timestamp_gte, timestamp_lte, in seconds). $cursor is
+# the (txHash, logIndex) of the last event read; the API documents it as an
+# exact anchor. pageInfo.countTotal counts the events after the cursor, so the
+# total of the window is the one returned with the first page.
 # Schema-drift note (2026-07): the API removed `uniqueKey` from the `Market`
 # type reachable through transaction data, which used to 400 the whole fetch.
 # We never needed it: the market identity comes from the $marketUniqueKey
 # filter variable, so the selection was dropped entirely.
+# Schema-drift note (2026-09): `transactions` was removed in favour of
+# `marketTransactions`; items expose `txHash` instead of `hash` and the data
+# union members were renamed MarketTransaction*Data.
 EVENTS_QUERY = """
 query MarketEvents(
   $first: Int!
-  $skip: Int!
   $marketUniqueKey: String!
-  $typeIn: [TransactionType!]
+  $typeIn: [MarketTransactionType!]
+  $timestampGte: Int!
+  $timestampLte: Int!
+  $cursor: MarketTransactionCursorInput
 ) {
-  transactions(
+  marketTransactions(
     first: $first
-    skip: $skip
     orderBy: Timestamp
     orderDirection: Desc
     where: {
       marketUniqueKey_in: [$marketUniqueKey]
       type_in: $typeIn
+      chainId_in: [1]
+      timestamp_gte: $timestampGte
+      timestamp_lte: $timestampLte
+      cursor: $cursor
     }
   ) {
+    pageInfo { countTotal }
     items {
-      hash
+      txHash
       logIndex
       timestamp
       blockNumber
       type
       user { address }
       data {
-        ... on MarketTransferTransactionData {
+        ... on MarketTransactionTransferData {
           assets
           shares
         }
-        ... on MarketLiquidationTransactionData {
+        ... on MarketTransactionLiquidationData {
           repaidAssets
           repaidShares
           seizedAssets
@@ -139,7 +157,7 @@ def _normalize_event_row(
         "market_id": market_id,
         "block_number": int(raw.get("blockNumber") or 0),
         "block_ts": block_ts,
-        "tx_hash": raw.get("hash") or "0x",
+        "tx_hash": raw.get("txHash") or "0x",
         "log_index": log_index,
     }
 
@@ -203,10 +221,9 @@ def _normalize_event_row(
 def _dedupe_events(rows: list[dict]) -> tuple[list[dict], int]:
     """Keep one row per log (tx_hash, log_index); return the rows and the drop count.
 
-    Skip pagination over a newest-first listing re-reads rows whenever new
-    transactions land between two pages; those repeats are identical and are
-    dropped. Two different payloads under one key would be a source defect,
-    so that case raises instead of silently picking one.
+    Cursor pagination should never read a log twice; this is a guard.
+    Identical repeats are dropped. Two different payloads under one key would
+    be a source defect, so that case raises instead of silently picking one.
     """
     kept: dict[tuple[str, int], dict] = {}
     for row in rows:
@@ -227,59 +244,42 @@ def _fetch_event_type_for_market(
     loan_decimals: int,
     collateral_decimals: int,
 ) -> list[dict]:
-    """Fetch all events of one type for one market within the configured time window.
+    """Fetch every event of one type for one market inside [start_ts, end_ts].
 
-    Strategy: fetch in reverse-chronological order (newest first), stop as
-    soon as we cross start_ts. Apply end_ts as a hard upper bound client-side.
+    The API filters the window and pages are chained with its cursor until an
+    empty page. The number of events kept must equal the countTotal of the
+    first page, otherwise the fetch fails instead of writing a partial cache.
     """
-    api_type = EVENT_TYPE_TO_API[event_type]
-    page_size = 1000
-    skip = 0
+    variables = {
+        "first": 1000,
+        "marketUniqueKey": market_id,
+        "typeIn": [EVENT_TYPE_TO_API[event_type]],
+        "timestampGte": start_ts,
+        "timestampLte": end_ts,
+        "cursor": None,
+    }
     rows: list[dict] = []
+    expected = None
 
     while True:
-        result = client._post(
-            EVENTS_QUERY,
-            {
-                "first": page_size,
-                "skip": skip,
-                "marketUniqueKey": market_id,
-                "typeIn": [api_type],
-            },
-        )
-
-        page_wrapper = result.get("transactions") or {}
-        page = page_wrapper.get("items") or []
-        if not page:
+        page = client._post(EVENTS_QUERY, variables).get("marketTransactions") or {}
+        if expected is None:
+            expected = int((page.get("pageInfo") or {}).get("countTotal") or 0)
+        items = page.get("items") or []
+        if not items:
             break
-
-        # Apply time-window filter client-side (we ordered Desc, so newest first)
-        early_stop = False
-        for raw in page:
-            ts = int(raw.get("timestamp") or 0)
-            if ts > end_ts:
-                continue  # too recent, skip but continue
-            if ts < start_ts:
-                early_stop = True  # we've gone past the start, stop pagination
-                break
+        for raw in items:
             row = _normalize_event_row(
                 event_type, raw, loan_decimals, collateral_decimals, market_id
             )
             if row is not None:
                 rows.append(row)
+        variables["cursor"] = {"txHash": items[-1]["txHash"], "logIndex": items[-1]["logIndex"]}
 
-        if early_stop or len(page) < page_size:
-            break
-
-        skip += page_size
-        if skip >= 10000:
-            logger.warning(
-                "Reached skip=10000 on %s/%s; possibly truncated. "
-                "Reduce window or use a different fetch strategy.",
-                event_type, market_id,
-            )
-            break
-
+    if len(rows) != expected:
+        raise RuntimeError(
+            f"{event_type}/{market_id}: {len(rows)} events kept, API countTotal {expected}"
+        )
     return rows
 
 
