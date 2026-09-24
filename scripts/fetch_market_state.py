@@ -6,7 +6,7 @@ across the configured time range, building a time series of:
 
     - total_supply_assets, total_supply_shares (S in loan-asset units, shares)
     - total_borrow_assets, total_borrow_shares (B in loan-asset units, shares)
-    - last_update (block of last contract state mutation)
+    - last_update (Unix timestamp of the last interest accrual)
     - fee (fraction)
     - total_collateral (computed from accumulated CreateMarket / liquidation
       events; not directly exposed by `market(id)`, derived in a follow-up

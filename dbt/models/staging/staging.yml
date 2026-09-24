@@ -37,6 +37,8 @@ models:
       - name: total_borrow_assets
         description: Loan asset borrowed, loan-asset units.
         data_tests: [not_null]
+      - name: last_update_unix
+        description: Market.lastUpdate, the Unix timestamp of the market's last interest accrual (not a block number).
       - name: utilization
         description: total_borrow_assets / total_supply_assets, null when supply is zero.
 

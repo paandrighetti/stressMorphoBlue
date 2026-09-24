@@ -108,7 +108,7 @@ denser sampling around stress events.
 | `total_borrow_assets` | float64 | Loan asset borrowed |
 | `total_borrow_shares` | float64 | Total borrow shares |
 | `total_collateral` | float64 | Collateral pool (collateral-asset units) |
-| `last_update` | uint64 | Contract `lastUpdate` field (block) |
+| `last_update` | uint64 | Contract `lastUpdate` field (Unix timestamp of the last interest accrual) |
 | `fee` | float64 | Market fee (0 to 1) |
 
 Constraints (validated):

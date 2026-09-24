@@ -7,7 +7,7 @@ select
     total_borrow_assets,
     total_borrow_shares,
     total_collateral,
-    cast(last_update as {{ dbt.type_bigint() }})                as last_update_block,
+    cast(last_update as {{ dbt.type_bigint() }})                as last_update_unix,
     fee,
     total_borrow_assets / nullif(total_supply_assets, 0)        as utilization
 from {{ source('morpho_cache', 'market_state') }}
