@@ -97,3 +97,25 @@ unit_tests:
         - {event_key: 't2-0', flow_type: 'withdraw', ledger: 'supply', flow_sign: -1, amount_loan_units: 40.0,  signed_amount_loan_units: -40.0}
         - {event_key: 't3-0', flow_type: 'borrow',   ledger: 'borrow', flow_sign: 1,  amount_loan_units: 30.0,  signed_amount_loan_units: 30.0}
         - {event_key: 't4-0', flow_type: 'repay',    ledger: 'borrow', flow_sign: -1, amount_loan_units: 10.0,  signed_amount_loan_units: -10.0}
+
+  - name: borrower_share_is_exactly_one_when_every_borrower_is_in_the_top_n
+    description: >
+      Three borrowers whose amounts do not add up exactly in floating point. top3_share and
+      top10_share must be exactly 1: numerators and denominator are summed over the same rows.
+      On the real cache, a window total summed in another order gave 1.0000000000000002.
+    model: int_morpho__borrower_activity
+    given:
+      - input: ref('stg_morpho__events_borrow')
+        rows:
+          - {market_id: '0xaaa', block_ts: '2026-06-20 00:00:00', on_behalf: '0xb1', assets: 0.1}
+          - {market_id: '0xaaa', block_ts: '2026-06-20 00:01:00', on_behalf: '0xb2', assets: 0.2}
+          - {market_id: '0xaaa', block_ts: '2026-06-20 00:02:00', on_behalf: '0xb3', assets: 0.3}
+      - input: ref('stg_morpho__markets')
+        rows:
+          - {market_id: '0xaaa', loan_asset_symbol: 'USDC', market_label: 'WBTC/USDC'}
+      - input: ref('roster_markets')
+        rows:
+          - {market_id: '0xaaa', roster_rank: 1}
+    expect:
+      rows:
+        - {market_id: '0xaaa', n_active_borrowers: 3, top3_share: 1.0, top10_share: 1.0}

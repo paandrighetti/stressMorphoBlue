@@ -2,7 +2,11 @@
     Shares are ratios within one market, so units cancel. This is an
     activity proxy: it counts addresses that borrowed inside the window,
     not current balances. Panel titles must say "activity", never
-    "current borrowers". -#}
+    "current borrowers".
+    Numerators and denominator are summed over the same rows in one
+    aggregation, so a share is exactly 1 when every borrower is in the top N.
+    A window total summed in another order gave 1.0000000000000002 on the
+    real cache and failed the [0, 1] bounds test. -#}
 with borrow_activity as (
 
     select
@@ -25,10 +29,7 @@ ranked as (
         row_number() over (
             partition by market_id
             order by borrowed_loan_units desc, borrower
-        )                                       as borrower_rank,
-        sum(borrowed_loan_units) over (
-            partition by market_id
-        )                                       as market_total_loan_units
+        )                                       as borrower_rank
     from borrow_activity
 
 )
@@ -38,13 +39,13 @@ select
     m.market_label,
     m.loan_asset_symbol,
     count(*)                                    as n_active_borrowers,
-    max(r.market_total_loan_units)              as activity_total_loan_units,
+    sum(r.borrowed_loan_units)                  as activity_total_loan_units,
     sum(case when r.borrower_rank <= 3  then r.borrowed_loan_units else 0 end)
-        / max(r.market_total_loan_units)        as top3_share,
+        / sum(r.borrowed_loan_units)            as top3_share,
     sum(case when r.borrower_rank <= 10 then r.borrowed_loan_units else 0 end)
-        / max(r.market_total_loan_units)        as top10_share
+        / sum(r.borrowed_loan_units)            as top10_share
 from ranked as r
 inner join {{ ref('stg_morpho__markets') }} as m
     on m.market_id = r.market_id
-where r.market_total_loan_units > 0
 group by 1, 2, 3
+having sum(r.borrowed_loan_units) > 0
