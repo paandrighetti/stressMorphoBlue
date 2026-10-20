@@ -8,8 +8,6 @@ on:
   schedule:
     - cron: "23 5 * * *"
   workflow_dispatch:
-  push:
-    branches: [sentinel-dev]
 
 permissions:
   contents: write
@@ -21,7 +19,7 @@ concurrency:
 jobs:
   sentinel:
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 240  # about two hours on public Ethereum endpoints (oracle prices: 80 minutes)
     env:
       ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
       TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}

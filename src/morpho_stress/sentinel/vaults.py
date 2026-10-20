@@ -86,19 +86,24 @@ def _v1(client: SubgraphClient, schema: Schema, roster: set[str]) -> tuple[list[
     if "market" not in alloc_fields or "supplyAssets" not in alloc_fields:
         return [], f"MetaMorpho V1 allocation fields not found ({sorted(alloc_fields)})"
     picks = [f for f in ("supplyAssets", "supplyCap", "pendingSupplyCap") if f in alloc_fields]
+    # The market's identifier was `uniqueKey` and is `marketId` since 2026 (400 "Cannot query field uniqueKey").
+    market_fields = schema.fields(schema.field_type(alloc_t or "", "market"))
+    key = next((f for f in ("marketId", "uniqueKey") if f in market_fields), None)
+    if key is None:
+        return [], f"MetaMorpho V1 market identifier not found ({sorted(market_fields)})"
     where_t = schema.arg_type("Query", "vaults", "where")
     where = "where: { chainId_in: [1] }" if "chainId_in" in schema.fields(where_t) else ""
     query = (
         "query V($first: Int!, $skip: Int!) { vaults(first: $first, skip: $skip"
         + (f", {where}" if where else "") + ") { items { address name asset { decimals } "
-        "state { allocation { market { uniqueKey } " + " ".join(picks) + " } } } } }"
+        "state { allocation { market { " + key + " } " + " ".join(picks) + " } } } } }"
     )
     rows = _paginate(client, query, "vaults")
     out: list[Allocation] = []
     for v in rows:
         dec = int((v.get("asset") or {}).get("decimals") or 18)
         for a in ((v.get("state") or {}).get("allocation") or []):
-            mid = ((a.get("market") or {}).get("uniqueKey") or "").lower()
+            mid = ((a.get("market") or {}).get(key) or "").lower()
             if mid not in roster:
                 continue
             supply = _raw(a.get("supplyAssets"), dec) or 0.0
