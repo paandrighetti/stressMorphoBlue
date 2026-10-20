@@ -49,16 +49,18 @@ jobs:
 
       - name: Configuration
         id: cfg
-        run: python scripts/sentinel_config.py --days 30
+        run: |
+          set -o pipefail
+          mkdir -p run
+          python scripts/sentinel_config.py --days 30 2>&1 | tee -a run/data.log
 
       - name: Data
         run: |
-          python scripts/fetch_markets.py
-          python scripts/fetch_market_state.py
-          python scripts/fetch_oracle_prices.py
-          python scripts/fetch_positions_api.py
-          python scripts/fetch_uniswap_quotes.py
-          python scripts/fetch_agg_quotes.py
+          set -o pipefail
+          for s in fetch_markets fetch_market_state fetch_oracle_prices fetch_positions_api fetch_uniswap_quotes fetch_agg_quotes; do
+            echo "$(date -u +%T) $s" | tee -a run/data.log
+            python "scripts/$s.py" 2>&1 | tee -a run/data.log
+          done
 
       - name: Evaluation
         run: python scripts/run_evaluation.py --out-csv run/evaluation.csv --out-json run/summary.json
@@ -76,6 +78,17 @@ jobs:
           git add -A
           git commit -q -m "sentinel $(date -u +%F), engine commit ${GITHUB_SHA::7}" || echo "nothing new"
           git push origin HEAD:sentinel-data
+
+      - name: Failure details
+        if: failure()
+        # The tail of the configuration and data output, as an annotation readable through the API.
+        run: |
+          python - <<'EOF'
+          from pathlib import Path
+          p = Path("run/data.log")
+          tail = "\n".join(p.read_text(errors="replace").splitlines()[-60:])[-3500:] if p.exists() else "no run/data.log"
+          print("::error title=Data output tail::" + tail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))
+          EOF
 
       - name: Telegram digest
         if: env.TELEGRAM_TOKEN != '' && env.TELEGRAM_CHAT != ''
