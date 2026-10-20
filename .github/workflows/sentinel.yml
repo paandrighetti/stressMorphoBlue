@@ -57,10 +57,21 @@ jobs:
       - name: Data
         run: |
           set -o pipefail
-          for s in fetch_markets fetch_market_state fetch_oracle_prices fetch_positions_api fetch_uniswap_quotes fetch_agg_quotes; do
+          for s in fetch_markets fetch_market_state fetch_oracle_prices fetch_positions_api fetch_uniswap_quotes; do
             echo "$(date -u +%T) $s" | tee -a run/data.log
             python "scripts/$s.py" 2>&1 | tee -a run/data.log
           done
+          # CoW Swap's quote API refuses requests from GitHub's servers (403, then 429). KyberSwap is the
+          # script's documented fallback; without either, markets lacking an exit curve stay excluded with
+          # their reason, as fetch_agg_quotes.py documents.
+          for src in cowswap kyberswap; do
+            echo "$(date -u +%T) fetch_agg_quotes $src" | tee -a run/data.log
+            if python scripts/fetch_agg_quotes.py --source "$src" 2>&1 | tee -a run/data.log; then
+              echo "aggregator quotes: $src" | tee -a run/data.log; break
+            fi
+            echo "aggregator quotes: $src unavailable" | tee -a run/data.log
+          done
+          echo "$(date -u +%T) data done" | tee -a run/data.log
 
       - name: Evaluation
         run: python scripts/run_evaluation.py --out-csv run/evaluation.csv --out-json run/summary.json
@@ -78,6 +89,18 @@ jobs:
           git add -A
           git commit -q -m "sentinel $(date -u +%F), engine commit ${GITHUB_SHA::7}" || echo "nothing new"
           git push origin HEAD:sentinel-data
+
+      - name: Timings
+        if: always()
+        # Start time of each data script, as an annotation readable through the API.
+        run: |
+          python - <<'EOF'
+          import re
+          from pathlib import Path
+          p = Path("run/data.log")
+          lines = [l for l in p.read_text(errors="replace").splitlines() if re.match(r"^(\d\d:\d\d:\d\d |aggregator quotes)", l)] if p.exists() else []
+          print("::notice title=Data timings::" + "%0A".join(lines))
+          EOF
 
       - name: Failure details
         if: failure()
