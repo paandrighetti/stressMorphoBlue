@@ -131,6 +131,19 @@ mainnet; evaluated coverage and headline figures are generated from
 **Snapshot**: 2026-07-16, state block 25,545,086. **Under LCR-inspired 24-hour stress (LSR-24; engine v1.1)**: 24 of 26 monitored markets evaluated. Survival frontier alpha\* (max absorbable 24h outflow): median 10.7%, minimum 1.0%; tiers 9 red, 14 yellow, 1 green. Class-aware extreme scenario: 20/24 fail on liquidity, 0/24 on solvency. Full tables in docs/REPORT.md; corrections vs v1.0 in docs/MODEL_CORRECTIONS.md.
 <!-- END GENERATED: readme_block -->
 
+## Daily sentinel
+
+Every day at 05:23 UTC, a GitHub Actions workflow re-runs the evaluation on live data for the markets of
+`markets_top.yaml`, reads the vaults' allocations to those markets from the Morpho API, and lists the
+risk-reducing actions that a vault's sentinel (Vault V2) or its guardian, curator and allocator (MetaMorpho)
+could take, under the rule set out in [docs/SENTINEL.md](docs/SENTINEL.md). It is read-only and signs nothing.
+
+The report is published on the
+[sentinel-data branch](https://github.com/paandrighetti/stressMorphoBlue/tree/sentinel-data): `latest.md`,
+`history.csv`, and the day's evaluation, allocations and actions under dated names. The run needs no key and
+takes about two hours on public Ethereum endpoints; an `ALCHEMY_KEY` repository secret replaces them and
+shortens it. Vault V2 allocations are not covered yet.
+
 ## Quick start
 
 ```bash

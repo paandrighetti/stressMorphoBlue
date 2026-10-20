@@ -1,0 +1,119 @@
+name: Daily liquidity sentinel
+
+# Read-only. Every day at 05:23 UTC the published engine re-evaluates the roster's markets on live
+# data, run_sentinel.py lists the actions a vault's sentinel could take (docs/SENTINEL.md), and the
+# report is committed to the sentinel-data branch. No key is required. Optional repository secrets:
+# ALCHEMY_KEY replaces the public Ethereum endpoints; TELEGRAM_TOKEN and TELEGRAM_CHAT send a digest.
+on:
+  schedule:
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sentinel
+  cancel-in-progress: false
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240  # about two hours on public Ethereum endpoints (oracle prices: 80 minutes)
+    env:
+      ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: python -m pip install -e .
+
+      - name: History from the sentinel-data branch
+        run: |
+          if git ls-remote --exit-code --heads origin sentinel-data > /dev/null; then
+            git fetch --depth=1 origin sentinel-data
+            git worktree add -b sentinel-data-local out FETCH_HEAD
+          else
+            git worktree add --detach out
+            git -C out checkout -q --orphan sentinel-data-local
+            git -C out rm -rq --cached . && git -C out clean -fdq
+          fi
+
+      - name: Configuration
+        id: cfg
+        run: |
+          set -o pipefail
+          mkdir -p run
+          python scripts/sentinel_config.py --days 30 2>&1 | tee -a run/data.log
+
+      - name: Data
+        run: |
+          set -o pipefail
+          for s in fetch_markets fetch_market_state fetch_oracle_prices fetch_positions_api fetch_uniswap_quotes; do
+            echo "$(date -u +%T) $s" | tee -a run/data.log
+            python "scripts/$s.py" 2>&1 | tee -a run/data.log
+          done
+          # CoW Swap's quote API refuses requests from GitHub's servers (403, then 429). KyberSwap is the
+          # script's documented fallback; without either, markets lacking an exit curve stay excluded with
+          # their reason, as fetch_agg_quotes.py documents.
+          for src in cowswap kyberswap; do
+            echo "$(date -u +%T) fetch_agg_quotes $src" | tee -a run/data.log
+            if python scripts/fetch_agg_quotes.py --source "$src" 2>&1 | tee -a run/data.log; then
+              echo "aggregator quotes: $src" | tee -a run/data.log; break
+            fi
+            echo "aggregator quotes: $src unavailable" | tee -a run/data.log
+          done
+          echo "$(date -u +%T) data done" | tee -a run/data.log
+
+      - name: Evaluation
+        run: python scripts/run_evaluation.py --out-csv run/evaluation.csv --out-json run/summary.json
+
+      - name: Report
+        run: >
+          python scripts/run_sentinel.py --evaluation run/evaluation.csv --summary run/summary.json
+          --data-dir out --rpc-label "${{ steps.cfg.outputs.rpc_label }}" --commit "${GITHUB_SHA::7}"
+
+      - name: Publish
+        run: |
+          cd out
+          git config user.name "sentinel-bot"
+          git config user.email "sentinel-bot@users.noreply.github.com"
+          git add -A
+          git commit -q -m "sentinel $(date -u +%F), engine commit ${GITHUB_SHA::7}" || echo "nothing new"
+          git push origin HEAD:sentinel-data
+
+      - name: Timings
+        if: always()
+        # Start time of each data script, as an annotation readable through the API.
+        run: |
+          python - <<'EOF'
+          import re
+          from pathlib import Path
+          p = Path("run/data.log")
+          lines = [l for l in p.read_text(errors="replace").splitlines() if re.match(r"^(\d\d:\d\d:\d\d |aggregator quotes)", l)] if p.exists() else []
+          print("::notice title=Data timings::" + "%0A".join(lines))
+          EOF
+
+      - name: Failure details
+        if: failure()
+        # The tail of the configuration and data output, as an annotation readable through the API.
+        run: |
+          python - <<'EOF'
+          from pathlib import Path
+          p = Path("run/data.log")
+          tail = "\n".join(p.read_text(errors="replace").splitlines()[-60:])[-3500:] if p.exists() else "no run/data.log"
+          print("::error title=Data output tail::" + tail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))
+          EOF
+
+      - name: Telegram digest
+        if: env.TELEGRAM_TOKEN != '' && env.TELEGRAM_CHAT != ''
+        run: >
+          curl -sS -o /dev/null -w "telegram: HTTP %{http_code}\n"
+          "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage"
+          --data-urlencode "chat_id=${TELEGRAM_CHAT}" --data-urlencode "text@run/digest.txt"
