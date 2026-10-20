@@ -1,0 +1,85 @@
+name: Daily liquidity sentinel
+
+# Read-only. Every day at 05:23 UTC the published engine re-evaluates the roster's markets on live
+# data, run_sentinel.py lists the actions a vault's sentinel could take (docs/SENTINEL.md), and the
+# report is committed to the sentinel-data branch. No key is required. Optional repository secrets:
+# ALCHEMY_KEY replaces the public Ethereum endpoints; TELEGRAM_TOKEN and TELEGRAM_CHAT send a digest.
+on:
+  schedule:
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+  push:
+    branches: [sentinel-dev]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sentinel
+  cancel-in-progress: false
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: python -m pip install -e .
+
+      - name: History from the sentinel-data branch
+        run: |
+          if git ls-remote --exit-code --heads origin sentinel-data > /dev/null; then
+            git fetch --depth=1 origin sentinel-data
+            git worktree add -b sentinel-data-local out FETCH_HEAD
+          else
+            git worktree add --detach out
+            git -C out checkout -q --orphan sentinel-data-local
+            git -C out rm -rq --cached . && git -C out clean -fdq
+          fi
+
+      - name: Configuration
+        id: cfg
+        run: python scripts/sentinel_config.py --days 30
+
+      - name: Data
+        run: |
+          python scripts/fetch_markets.py
+          python scripts/fetch_market_state.py
+          python scripts/fetch_oracle_prices.py
+          python scripts/fetch_positions_api.py
+          python scripts/fetch_uniswap_quotes.py
+          python scripts/fetch_agg_quotes.py
+
+      - name: Evaluation
+        run: python scripts/run_evaluation.py --out-csv run/evaluation.csv --out-json run/summary.json
+
+      - name: Report
+        run: >
+          python scripts/run_sentinel.py --evaluation run/evaluation.csv --summary run/summary.json
+          --data-dir out --rpc-label "${{ steps.cfg.outputs.rpc_label }}" --commit "${GITHUB_SHA::7}"
+
+      - name: Publish
+        run: |
+          cd out
+          git config user.name "sentinel-bot"
+          git config user.email "sentinel-bot@users.noreply.github.com"
+          git add -A
+          git commit -q -m "sentinel $(date -u +%F), engine commit ${GITHUB_SHA::7}" || echo "nothing new"
+          git push origin HEAD:sentinel-data
+
+      - name: Telegram digest
+        if: env.TELEGRAM_TOKEN != '' && env.TELEGRAM_CHAT != ''
+        run: >
+          curl -sS -o /dev/null -w "telegram: HTTP %{http_code}\n"
+          "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage"
+          --data-urlencode "chat_id=${TELEGRAM_CHAT}" --data-urlencode "text@run/digest.txt"
