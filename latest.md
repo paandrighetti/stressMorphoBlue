@@ -1,12 +1,12 @@
-# Morpho Blue liquidity sentinel, 2026-10-25
+# Morpho Blue liquidity sentinel, 2026-10-26
 
 Read-only. Each day the stressMorphoBlue engine re-evaluates the roster's markets on live data, and the rule of [docs/SENTINEL.md](https://github.com/paandrighetti/stressMorphoBlue/blob/main/docs/SENTINEL.md) lists the actions a vault's sentinel (Vault V2) or guardian, curator and allocator (MetaMorpho) could take. No transaction is signed. Not investment advice.
 
 ## Summary
 
-- Markets evaluated: 24 (red 7, yellow 17, green 0); not evaluated: 2.
+- Markets evaluated: 24 (red 11, yellow 13, green 0); not evaluated: 2.
 - Tier changes since the previous run: 6.
-- Actions listed: 6, for 5 vaults.
+- Actions listed: 10, for 6 vaults.
 - Vault data: MetaMorpho V1: 162 vaults allocated to the roster (fields supplyAssets, supplyCap, pendingSupplyCap); Vault V2 not covered yet (fields of VaultV2: adapters, address, allocators, apy, asset, avgNetApy, avgNetApyExcludingRewards, caps, chain, creationBlockNumber, creationTimestamp, curator, curators, factory, forceDeallocatableLiquidity, forceDeallocatableLiquidityUsd, gatesConfig, historicalState, id, idleAssets, idleAssetsUsd, liquidity, liquidityAdapter, liquidityData, liquidityUsd, listed, listingHistory, managementFee, managementFeeConfig, managementFeeRecipient, managementFeeRecipientConfig, maxApy, maxRate, metadata, name, netApy, netApyExcludingRewards, owner, pendingConfigs, performanceFee, performanceFeeConfig, performanceFeeRecipient, performanceFeeRecipientConfig, positions, rewards, sentinels, sharePrice, symbol, timelocks, totalAssets, totalAssetsUsd, totalSupply, type, warnings)
 
 ## Markets
@@ -15,30 +15,30 @@ alpha* is the largest share of supply the market can pay out within 24 hours und
 
 | Market | Supply | Utilization | alpha* | Absorbable in 24 h | Tier | Previous run | Runs in tier |
 |---|---|---|---|---|---|---|---|
-| stcUSD/USDT | 2.41 USDT | 100.0% | 0.0% | 0.00 USDT | red | red | 3 |
-| sUSDat/AUSD | 200.44 k AUSD | 96.7% | 3.3% | 6.65 k AUSD | red | red | 4 |
-| PT-apyUSD-18JUN2026/USDC | 3.61 m USDC | 91.2% | 8.8% | 318.27 k USDC | red | red | 2 |
-| wsrUSD/USDC | 8.68 m USDC | 90.1% | 9.9% | 856.53 k USDC | red | yellow | 1 |
-| cbBTC/PYUSD | 1.68 m PYUSD | 90.1% | 9.9% | 166.21 k PYUSD | red | red | 6 |
-| wstETH/USDC | 32.90 m USDC | 90.1% | 9.9% | 3.26 m USDC | red | yellow | 1 |
-| cbBTC/USDC | 343.17 m USDC | 90.1% | 9.9% | 34.04 m USDC | red | red | 6 |
-| WBTC/USDC | 128.97 m USDC | 89.7% | 10.3% | 13.28 m USDC | yellow | red | 1 |
-| LBTC/PYUSD | 2.38 k PYUSD | 89.7% | 10.3% | 244.87 PYUSD | yellow | yellow | 6 |
-| stUSDS/USDC | 7.50 m USDC | 89.6% | 10.4% | 781.84 k USDC | yellow | red | 1 |
-| sUSDe/PYUSD | 109.59 m PYUSD | 89.1% | 10.9% | 11.99 m PYUSD | yellow | yellow | 6 |
-| sUSDe/USDtb | 1.01 m USDtb | 89.1% | 12.0% | 121.99 k USDtb | yellow | red | 1 |
-| weETH/RLUSD | 100.53 m RLUSD | 87.9% | 12.1% | 12.20 m RLUSD | yellow | yellow | 6 |
-| AA_FalconXUSDC/USDC | 8.01 m USDC | 87.5% | 12.5% | 1.00 m USDC | yellow | yellow | 6 |
-| mF-ONE/USDC | 23.39 m USDC | 87.0% | 13.0% | 3.04 m USDC | yellow | yellow | 6 |
-| weETH/PYUSD | 15.45 m PYUSD | 86.1% | 13.9% | 2.14 m PYUSD | yellow | yellow | 2 |
-| syrupUSDC/RLUSD | 902.27 k RLUSD | 86.1% | 13.9% | 125.11 k RLUSD | yellow | yellow | 6 |
-| wstETH/USDT | 162.08 m USDT | 85.0% | 15.0% | 24.36 m USDT | yellow | yellow | 2 |
-| WBTC/USDT | 98.73 m USDT | 84.9% | 15.1% | 14.87 m USDT | yellow | yellow | 2 |
-| wstETH/WETH | 9.04 k WETH | 84.3% | 15.7% | 1.42 k WETH | yellow | yellow | 3 |
-| wstETH/WETH | 28.32 k WETH | 84.1% | 15.9% | 4.50 k WETH | yellow | yellow | 3 |
-| sUSDS/USDT | 13.52 m USDT | 85.0% | 16.3% | 2.21 m USDT | yellow | yellow | 3 |
-| weETH/WETH | 5.26 k WETH | 82.5% | 17.5% | 919.27 WETH | yellow | yellow | 2 |
-| PT-reUSD-25JUN2026/USDC | 3.10 k USDC | 73.2% | 26.8% | 829.90 USDC | yellow | red | 1 |
+| stcUSD/USDT | 2.41 USDT | 100.0% | 0.0% | 0.00 USDT | red | red | 4 |
+| sUSDat/AUSD | 207.55 k AUSD | 93.4% | 6.6% | 13.68 k AUSD | red | red | 5 |
+| WBTC/USDT | 91.64 m USDT | 91.5% | 8.5% | 7.83 m USDT | red | yellow | 1 |
+| wstETH/USDT | 149.68 m USDT | 91.5% | 8.5% | 12.79 m USDT | red | yellow | 1 |
+| mF-ONE/USDC | 25.51 m USDC | 90.8% | 9.2% | 2.36 m USDC | red | yellow | 1 |
+| stUSDS/USDC | 7.50 m USDC | 90.5% | 9.5% | 712.19 k USDC | red | yellow | 1 |
+| wsrUSD/USDC | 8.64 m USDC | 90.2% | 9.8% | 845.35 k USDC | red | red | 2 |
+| cbBTC/PYUSD | 1.68 m PYUSD | 90.1% | 9.9% | 166.24 k PYUSD | red | red | 7 |
+| wstETH/USDC | 32.92 m USDC | 90.1% | 9.9% | 3.26 m USDC | red | red | 2 |
+| cbBTC/USDC | 343.30 m USDC | 90.1% | 9.9% | 34.07 m USDC | red | red | 7 |
+| WBTC/USDC | 128.34 m USDC | 90.1% | 9.9% | 12.77 m USDC | red | yellow | 1 |
+| sUSDS/USDT | 12.58 m USDT | 91.5% | 10.0% | 1.26 m USDT | yellow | yellow | 4 |
+| PT-apyUSD-18JUN2026/USDC | 3.66 m USDC | 90.0% | 10.0% | 367.33 k USDC | yellow | red | 1 |
+| LBTC/PYUSD | 2.38 k PYUSD | 89.7% | 10.3% | 243.69 PYUSD | yellow | yellow | 7 |
+| weETH/RLUSD | 100.54 m RLUSD | 89.5% | 10.5% | 10.60 m RLUSD | yellow | yellow | 7 |
+| sUSDe/PYUSD | 109.59 m PYUSD | 89.1% | 10.9% | 11.99 m PYUSD | yellow | yellow | 7 |
+| AA_FalconXUSDC/USDC | 7.95 m USDC | 88.2% | 11.8% | 939.51 k USDC | yellow | yellow | 7 |
+| weETH/PYUSD | 15.35 m PYUSD | 86.7% | 13.3% | 2.04 m PYUSD | yellow | yellow | 3 |
+| sUSDe/USDtb | 924.22 k USDtb | 87.5% | 13.7% | 126.79 k USDtb | yellow | yellow | 2 |
+| syrupUSDC/RLUSD | 902.45 k RLUSD | 86.1% | 13.9% | 125.11 k RLUSD | yellow | yellow | 7 |
+| wstETH/WETH | 9.44 k WETH | 84.5% | 15.5% | 1.46 k WETH | yellow | yellow | 4 |
+| wstETH/WETH | 28.70 k WETH | 84.2% | 15.8% | 4.52 k WETH | yellow | yellow | 4 |
+| weETH/WETH | 5.13 k WETH | 82.8% | 17.2% | 880.74 WETH | yellow | yellow | 3 |
+| PT-reUSD-25JUN2026/USDC | 2.75 k USDC | 82.6% | 17.4% | 479.16 USDC | yellow | yellow | 2 |
 
 ## Actions by vault
 
@@ -46,11 +46,15 @@ Coverage is the market's absorbable outflow over the vault's allocation: below 1
 
 | Vault | Version | Market | Tier | Coverage | Action | Role and call | Amount | Why |
 |---|---|---|---|---|---|---|---|---|
-| Spark Blue Chip USDC Vault (`0x56a76b42`) | v1 | wstETH/USDC | red | 0.84 | deallocate | allocator: reallocate | 3.26 m USDC | red market and the vault could not exit within 24 hours: withdraw what the market's idle liquidity allows |
-| Spark Blue Chip USDC Vault (`0x56a76b42`) | v1 | wstETH/USDC | red | 0.84 | decrease cap | curator: submitCap (a decrease applies at once) | 3.90 m USDC | red market and the vault could not exit within 24 hours: cap set to the current allocation |
-| Gauntlet USDC RWA (`0xa8875aae`) | v1 | AA_FalconXUSDC/USDC | yellow | 0.30 | revoke | guardian: revokePendingCap | 40.00 m USDC | yellow market: the pending cap exceeds what the market absorbs in 24 hours |
-| Gauntlet WETH Prime (`0x2371e134`) | v1 | weETH/WETH | yellow | 0.90 | revoke | guardian: revokePendingCap | 100.00 k WETH | yellow market: the pending cap exceeds what the market absorbs in 24 hours |
-| Vault Bridge USDT (`0xc54b4e08`) | v1 | WBTC/USDT | yellow | 11.54 | revoke | guardian: revokePendingCap | 200.00 m USDT | yellow market: the pending cap exceeds what the market absorbs in 24 hours |
+| Steakhouse USDT (`0xbeef047a`) | v1 | WBTC/USDT | red | 0.29 | deallocate | allocator: reallocate | 7.83 m USDT | red market and the vault could not exit within 24 hours: withdraw what the market's idle liquidity allows |
+| Steakhouse USDT (`0xbeef047a`) | v1 | WBTC/USDT | red | 0.29 | decrease cap | curator: submitCap (a decrease applies at once) | 27.23 m USDT | red market and the vault could not exit within 24 hours: cap set to the current allocation |
+| Steakhouse USDT (`0xbeef047a`) | v1 | wstETH/USDT | red | 0.36 | deallocate | allocator: reallocate | 12.79 m USDT | red market and the vault could not exit within 24 hours: withdraw what the market's idle liquidity allows |
+| Steakhouse USDT (`0xbeef047a`) | v1 | wstETH/USDT | red | 0.36 | decrease cap | curator: submitCap (a decrease applies at once) | 35.46 m USDT | red market and the vault could not exit within 24 hours: cap set to the current allocation |
+| Smokehouse USDC (`0xbeefff20`) | v1 | mF-ONE/USDC | red | 0.74 | deallocate | allocator: reallocate | 2.36 m USDC | red market and the vault could not exit within 24 hours: withdraw what the market's idle liquidity allows |
+| Smokehouse USDC (`0xbeefff20`) | v1 | mF-ONE/USDC | red | 0.74 | decrease cap | curator: submitCap (a decrease applies at once) | 3.18 m USDC | red market and the vault could not exit within 24 hours: cap set to the current allocation |
+| Vault Bridge USDT (`0xc54b4e08`) | v1 | WBTC/USDT | red | 10.42 | revoke | guardian: revokePendingCap | 200.00 m USDT | red market: no cap increase |
+| Gauntlet USDC RWA (`0xa8875aae`) | v1 | AA_FalconXUSDC/USDC | yellow | 0.28 | revoke | guardian: revokePendingCap | 40.00 m USDC | yellow market: the pending cap exceeds what the market absorbs in 24 hours |
+| Gauntlet WETH Prime (`0x2371e134`) | v1 | weETH/WETH | yellow | 0.87 | revoke | guardian: revokePendingCap | 100.00 k WETH | yellow market: the pending cap exceeds what the market absorbs in 24 hours |
 | Sentora RLUSD (`0x71cb2f80`) | v1 | weETH/RLUSD | yellow | n/a | revoke | guardian: revokePendingCap | 75.00 m RLUSD | yellow market: the pending cap exceeds what the market absorbs in 24 hours |
 
 ## Not evaluated today
@@ -65,4 +69,4 @@ Coverage is the market's absorbable outflow over the vault's allocation: below 1
 - Engine: stressMorphoBlue v1.1, methodology rolling-window-v2, commit 5001908
 - Ethereum endpoint: public endpoint https://eth.drpc.org
 - Position book and vaults: Morpho API (https://api.morpho.org/graphql)
-- Evaluation block: 26268654
+- Evaluation block: 26276421
